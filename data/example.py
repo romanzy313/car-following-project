@@ -15,14 +15,21 @@ https://github.com/RomainLITUD/Car-Following-Dataset-HV-vs-AV
 
 n = 10
 
+
 # read dataset
 data: zarr.Group = zarr.open("./trainHH.zarr", mode="r")  # type: ignore
+print(data.index_range)
+
+
 start, end = data.index_range[n]
 
 # get vehicle size
 size_lead = 4.85  # this is for AV
 size_lead = data.lead_size[n]  # this is for HV
 size_follow = data.follow_size[n]
+
+print(data.id[:])  # type: ignore
+# print(data.id[:])  # type: ignore
 
 # get timestamps
 timestamps = data.timestamp[start:end]
@@ -37,5 +44,3 @@ v_follow = data.follow_velocity[start:end]
 a_follow = data.follow_acceleration[start:end]
 
 # merged = [timestamps, x_follow, v_follow, a_follow]
-
-print(data.info)
