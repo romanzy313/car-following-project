@@ -7,6 +7,8 @@ name = "pypi"
 numpy = "*"
 matplotlib = "*"
 pygame = "*"
+zarr = "*"
+pandas = "*"
 
 [dev-packages]
 black = "*"
