@@ -2,6 +2,17 @@
 
 Project description
 
+# Notes
+
+- Perform inital dimension reduction on 3 second intervals of the training set.
+- Run simulation multiple times with different starting configurations
+- Use different reaction models (based on classification), using case_id, and resulting models are denoted as f1, f2, ... ,fn
+- Each vehicle can have its own
+- For clustering: Use k-means or unsupervised clustering, aggregate this data by aggressiveness (minimum Time To Collision): minTTC = (delta position)/(delta time)
+- Other useful features maxA, maxV, std of anything. etc...
+- Then do simulation by selecting populations of data
+- Set acceleration as the output variable
+
 # Tutorials
 
 - Enter virtual environment with `pipenv shell`
