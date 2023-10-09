@@ -12,6 +12,7 @@ pandas = "*"
 
 [dev-packages]
 black = "*"
+ipykernel = "*"
 
 [requires]
 python_version = "3.10"
