@@ -9,6 +9,8 @@ matplotlib = "*"
 pygame = "*"
 zarr = "*"
 pandas = "*"
+torch = "*"
+tqdm = "*"
 
 [dev-packages]
 black = "*"
