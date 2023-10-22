@@ -11,6 +11,7 @@ zarr = "*"
 pandas = "*"
 torch = "*"
 tqdm = "*"
+scikit-learn = "*"
 
 [dev-packages]
 black = "*"
