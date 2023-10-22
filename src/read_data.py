@@ -4,13 +4,13 @@ import pandas as pd
 import zarr
 
 
-def read_data(cfpair, dataset, root_folder="./data/"):
-    regimes_file = Path(
-        root_folder + "regimes_list_" + cfpair + "_" + dataset + ".csv"
-    ).resolve()
+def read_data(cfpair, dataset, root_folder="../data/"):
+    # regimes_file = Path(
+    #     root_folder + "regimes_list_" + cfpair + "_" + dataset + ".csv"
+    # ).resolve()
     data_file = Path(root_folder + dataset + cfpair + ".zarr/").resolve()
 
-    regimes_list = pd.read_csv(regimes_file, index_col=0)
+    # regimes_list = pd.read_csv(regimes_file, index_col=0)
     data: any = zarr.open(data_file, mode="r")  # type: ignore
     indexrange = data.index_range[:]
 
@@ -48,4 +48,4 @@ def read_data(cfpair, dataset, root_folder="./data/"):
         }
     )
 
-    return data, regimes_list
+    return data
