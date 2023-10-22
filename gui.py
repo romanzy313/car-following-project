@@ -5,7 +5,6 @@ from gui.constants import *
 from gui.constants import rotate2d
 
 
-
 # from gui.draw import draw_road
 # from gui.gui import draw_road
 
@@ -38,16 +37,25 @@ def main():
         pygame.draw.rect(screen, vis_color, vis_rect)
         pygame.draw.circle(screen, road_color, vis_center, road_radius, road_width)
 
-
         # Calculate the new position
-        x = vis_center[0] + road_radius * math.cos(math.radians(angle)) - car_image_rect[2]/2
-        y = vis_center[1] + road_radius * math.sin(math.radians(angle)) - car_image_rect[3]/2
+        x = (
+            vis_center[0]
+            + road_radius * math.cos(math.radians(angle))
+            - car_image_rect[2] / 2
+        )
+        y = (
+            vis_center[1]
+            + road_radius * math.sin(math.radians(angle))
+            - car_image_rect[3] / 2
+        )
 
         # screen.blit(rotate2d(car_image, (x,y), angle), (x,y))
 
-
         # rotate is not proper
-        screen.blit(pygame.transform.rotate(car_image, -angle), (x + car_image_rect.centerx /2, y + car_image_rect.centery /2))
+        screen.blit(
+            pygame.transform.rotate(car_image, -angle),
+            (x + car_image_rect.centerx / 2, y + car_image_rect.centery / 2),
+        )
         # pygame.draw.circle(screen, "red", player_pos, 40)
 
         keys = pygame.key.get_pressed()
