@@ -1,3 +1,4 @@
+import random
 from src.vehicle import Vehicle
 from src.model import KeepDistanceModel, Model
 from typing import List
@@ -22,6 +23,7 @@ def make_equadistent_scene(
     road_length: float,
     vehicle_count: int,
     initial_velocity: float,
+    fuzzy_position: float,  # by how much positions can shift
     model: Model,
     model_args,
 ):
@@ -30,6 +32,9 @@ def make_equadistent_scene(
 
     for i in range(0, vehicle_count):
         initial_position = i * segment_length
+
+        # randomize positions a bit
+        initial_position += random.uniform(-fuzzy_position, fuzzy_position)
         m = model(
             id=str(i),
             length=vehicle.length,

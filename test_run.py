@@ -11,6 +11,7 @@ def main():
         road_length=40,
         vehicle_count=4,
         initial_velocity=1,
+        fuzzy_position=1,
         model=KeepDistanceModel,
         model_args={"keep_distance": 5},
     )
