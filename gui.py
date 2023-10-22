@@ -2,7 +2,6 @@ import math
 import pygame
 from gui.car import Car
 from gui.constants import *
-from gui.constants import rotate2d
 
 
 # from gui.draw import draw_road

@@ -24,7 +24,7 @@ def make_equadistent_scene(
     vehicle_count: int,
     initial_velocity: float,
     fuzzy_position: float,  # by how much positions can shift
-    model: Model,
+    model: type[Model],
     model_args,
 ):
     models: List[Model] = []
@@ -37,9 +37,7 @@ def make_equadistent_scene(
         initial_position += random.uniform(-fuzzy_position, fuzzy_position)
         m = model(
             id=str(i),
-            length=vehicle.length,
-            max_acceleration=vehicle.max_acceleration,
-            max_deceleration=vehicle.max_deceleration,
+            vehicle=vehicle,
             initial_position=initial_position,
             inital_velocity=initial_velocity,
         )

@@ -4,7 +4,7 @@ from src.vehicle import Vehicle
 
 
 def main():
-    vehicle = Vehicle(id="1", length=1, max_acceleration=1, max_deceleration=-1)
+    vehicle = Vehicle(length=1, max_acceleration=1, max_deceleration=-1)
 
     scene = make_equadistent_scene(
         vehicle=vehicle,

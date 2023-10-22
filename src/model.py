@@ -1,17 +1,16 @@
 from src.vehicle import Vehicle
 
 
-class Model(Vehicle):
+class Model:
     def __init__(
         self,
         id: str,
-        length: float,
-        max_deceleration: float,
-        max_acceleration: float,
+        vehicle: Vehicle,
         initial_position: float,
         inital_velocity: float,
     ):
-        super().__init__(id, length, max_deceleration, max_acceleration)
+        self.id = id
+        self.vehicle = vehicle
         self.position = initial_position
         self.velocity = inital_velocity
 
@@ -21,7 +20,8 @@ class Model(Vehicle):
         The accelerations are hard limited by min/max
         """
         filtered_acc = max(
-            self.max_deceleration, min(self.max_acceleration, acceleration)
+            self.vehicle.max_deceleration,
+            min(self.vehicle.max_acceleration, acceleration),
         )
 
         if filtered_acc != acceleration:
@@ -48,10 +48,10 @@ class Model(Vehicle):
         It takes in delta position and velocity to the vehicle ahead
         and returns acceleration
         """
-        pass
+        raise Exception("Abstract me!")
 
-    def inject_args():
-        pass
+    def inject_args(self, args):
+        raise Exception("Abstract me!")
 
 
 class KeepDistanceModel(Model):
