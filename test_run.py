@@ -8,8 +8,8 @@ def main():
     vehicle = Vehicle(length=1, max_acceleration=1, max_deceleration=-1)
 
     scene = make_equadistent_scene(
-        model_name="KeepDistance",
-        model_args={"keep_distance": 5},
+        model_name="RandomAcceleration",
+        model_args={"spread": 0.3},
         vehicle=vehicle,
         road_length=40,
         vehicle_count=4,

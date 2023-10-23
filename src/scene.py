@@ -152,6 +152,7 @@ class SimulationRunner:
             collision = self.tick(dt)
             if collision:
                 self.output.append({"end": "collision"})
+                print(f"collision at iteration {self.iteration}")
                 return
             elif self.iteration == max_iterations:
                 self.output.append({"end": "great success"})
