@@ -1,4 +1,5 @@
 from src.vehicle import Vehicle
+import importlib
 
 
 class Model:
@@ -41,6 +42,8 @@ class Model:
     def print_state(self):
         print(f"[{id}] position {self.position} velocty {self.velocity}")
 
+    # abstract functions
+
     def tick(self, delta_pos: float, delta_vel: float) -> float:
         """
         Abstract function
@@ -54,17 +57,9 @@ class Model:
         raise Exception("Abstract me!")
 
 
-class KeepDistanceModel(Model):
-    keep_distance = 0
-
-    def inject_args(self, args):
-        self.keep_distance = args["keep_distance"]
-        # print("injected keep distance", self.keep_distance)
-
-    def tick(self, delta_pos: float, delta_vel: float) -> float:
-        """
-        This sample model tries to keep the same position as the vehicle in the front
-        """
-
-        return 0.1
-        # return super().tick(delta_pos, delta_vel)
+# https://stackoverflow.com/questions/4821104/dynamic-instantiation-from-string-name-of-a-class-in-dynamically-imported-module
+def get_model_from_name(class_name: str) -> type[Model]:
+    module = importlib.import_module(f"models.{class_name}")
+    class_ = getattr(module, "Definition")
+    print("class is", class_)
+    return class_
