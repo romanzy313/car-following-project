@@ -114,7 +114,7 @@ class SimulationRunner:
             models[i].apply_acceleration(accelerations[i], dt)
 
         # step 4, being lazy for now
-        collided = self.check_collisions_simple()
+        collided = self.check_collisions()
 
         # if collided:
         #     self.output.append({"end": "collision"})
@@ -122,18 +122,19 @@ class SimulationRunner:
 
         return collided
 
-    def check_collisions_simple(self) -> bool:
-        """
-        This is a simple way to check if models collide
-        In this case, the length of each vehicle is not taken into account
-        """
-
+    def check_collisions(self) -> bool:
         models = self.scene.models
 
         for i in range(0, len(models) - 2):
             this = models[i]
             next = models[i + 1]
-            if next.position - this.position <= 0:
+            if (
+                next.position
+                - next.vehicle.length / 2
+                - this.position
+                - this.vehicle.length / 2
+                <= 0
+            ):
                 print(f"Vehicle {this.id} collided with {next.id}")
                 return True
             pass
@@ -141,7 +142,16 @@ class SimulationRunner:
         # last one is the special case
         first = models[0]
         last = models[len(models) - 1]
-        if self.scene.road_length - (last.position - first.position) <= 0:
+        if (
+            self.scene.road_length
+            - (
+                last.position
+                - last.vehicle.length / 2
+                - first.position
+                - first.vehicle.length
+            )
+            <= 0
+        ):
             print(f"Vehicle {last.id} collided with {first.id}")
             return True
 

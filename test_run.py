@@ -12,7 +12,7 @@ def main():
         model_args={"spread": 0.3},
         vehicle=vehicle,
         road_length=40,
-        vehicle_count=4,
+        vehicle_count=10,
         initial_velocity=1,
         fuzzy_position=1,
     )
