@@ -17,6 +17,9 @@ car_image_rect = car_image.get_rect()
 
 ui_rect = (0, 620, 920, 100)
 start_stop_rect = (620, 0, 100, 30)
-iteration_rect = (620 + 10, 50)
-outcome_rect = (620 + 10, 80)
+
+playback_rect = (620 + 10, 50)
+iteration_rect = (620 + 10, 50 + 20)
+outcome_rect = (620 + 10, 50 + 20 + 20)
+
 progress_rect = (0, 620 + 10, 920, 30)

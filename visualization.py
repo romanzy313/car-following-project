@@ -9,7 +9,7 @@ import math
 import json
 
 
-def blitRotate(surf, image, pos, originPos, angle):
+def blit_rotate(surf, image, pos, originPos, angle):
     # offset from pivot to center
     image_rect = image.get_rect(topleft=(pos[0] - originPos[0], pos[1] - originPos[1]))
     offset_center_to_pivot = pygame.math.Vector2(pos) - image_rect.center
@@ -33,29 +33,28 @@ def blitRotate(surf, image, pos, originPos, angle):
     # )
 
 
-def drawVehicle(surf, image, angle):
+def draw_vehicle(surf, image, angle):
     # Calculate the new position
     w, h = car_image.get_size()
 
     x = vis_center[0] + (road_radius - road_width / 2) * math.sin(math.radians(angle))
     y = vis_center[1] + (road_radius - road_width / 2) * math.cos(math.radians(angle))
-    blitRotate(surf, image, (x, y), (w / 2, h / 2), angle - 90)
+    blit_rotate(surf, image, (x, y), (w / 2, h / 2), angle - 90)
 
     pass
 
 
-def load_result(name: str):
+def load_run_result(name: str):
     with open(name) as f:
         data = json.load(f)
         return data
-        # print(d)
 
 
-result = load_result("results/test_run.json")
-road_length: float = result["scene"]["road_length"]
-steps = result["steps"]
+run_result = load_run_result("results/test_run.json")
+road_length: float = run_result["scene"]["road_length"]
+steps = run_result["steps"]
 iteration_count: int = len(steps) - 1
-outcome: str = result["outcome"]
+outcome: str = run_result["outcome"]
 
 iteration: int = 0
 
@@ -66,6 +65,19 @@ def next_iteration():
         iteration = 0
     else:
         iteration += 1
+
+
+playback_speed = 1
+
+
+def speed_up():
+    global playback_speed
+    playback_speed = min(2.0, playback_speed + 0.25)
+
+
+def slow_down():
+    global playback_speed
+    playback_speed = max(0.25, playback_speed - 0.25)
 
 
 # pygame
@@ -81,8 +93,6 @@ manager = pygame_gui.UIManager(display_size)
 running = True
 playing = True
 dt = 0
-angle = 0
-speed = 100
 
 
 def render_text(surf, text: str, position, color="white"):
@@ -121,6 +131,10 @@ while running:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE:
                 toggle_playing()
+            if event.unicode == "+":
+                speed_up()
+            if event.key == pygame.K_MINUS:
+                slow_down()
 
         if event.type == pygame_gui.UI_BUTTON_PRESSED:
             if event.ui_element == start_stop_button:
@@ -140,19 +154,13 @@ while running:
     vehicles = steps[iteration]["vehicles"]
     for vehicle in vehicles:
         angle = (vehicle["position"] / road_length) * 360
-        drawVehicle(screen, car_image, angle)
-
-    # keys = pygame.key.get_pressed()
-    # if keys[pygame.K_SPACE]:
-    #     print("spacebaar")
-    #     playing = not playing
-    # if keys[pygame.K_s]:
-    #     speed -= 100 * dt
+        draw_vehicle(screen, car_image, angle)
 
     if playing:
         next_iteration()
 
     # draw ui
+    render_text(screen, f"Playback speed: {playback_speed}x", playback_rect)
     render_text(screen, f"Iteration: {iteration}/{iteration_count}", iteration_rect)
     render_text(screen, f"Outcome: {outcome}", outcome_rect)
 
@@ -163,5 +171,5 @@ while running:
     # limits FPS to 60
     # dt is delta time in seconds since last frame, used for framerate-
     # independent physics.
-    dt = clock.tick(60) / 1000
+    dt = clock.tick(60 * playback_speed) / 1000
 pygame.quit()
