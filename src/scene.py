@@ -15,8 +15,15 @@ class Scene:
         self.road_length = road_length
         # pass
 
-    def describe(self):
-        print("total models", len(self.models))
+    def to_json(self):
+        return {
+            "road_length": self.road_length,
+            "models": list(map(lambda model: model.to_json()["id"], self.models))
+            # self.models[0].to_json(),
+        }
+
+    def print_state(self):
+        print(f"total number of models {self.models}")
 
 
 def make_equadistent_scene(
@@ -61,7 +68,8 @@ class SimulationRunner:
 
     time = 0
     iteration = 0
-    output = []
+    steps = []
+    outcome: str = ""
 
     def __init__(self, scene: Scene) -> None:
         self.scene = scene
@@ -85,7 +93,7 @@ class SimulationRunner:
         # steps 1 and 2
         models = self.scene.models
         accelerations = []
-        for i in range(0, len(models) - 2):
+        for i in range(0, len(models) - 1):
             this = models[i]
             next = models[i + 1]
             delta_pos = next.position - this.position
@@ -101,9 +109,8 @@ class SimulationRunner:
         delta_vel = last.velocity - first.velocity
         last_acc = last.tick(delta_pos, delta_vel)
         accelerations.append(last_acc)
-
         # step 3
-        for i in range(0, len(models) - 1):
+        for i in range(0, len(models)):
             models[i].apply_acceleration(accelerations[i], dt)
 
         # step 4, being lazy for now
@@ -144,29 +151,29 @@ class SimulationRunner:
     #     for model in self.scene.models:
     #         model.app
 
-    def run(self, dt: float, max_iterations: int):
+    def run(self, dt: float, max_iterations: int) -> None:
         # for every vehicle run the algorythm
         print(f"doing the run for {max_iterations} times")
 
         while True:
             collision = self.tick(dt)
             if collision:
-                self.output.append({"end": "collision"})
+                # self.steps.append({"end": "collision"})
+                self.outcome = "collision"
                 print(f"collision at iteration {self.iteration}")
                 return
             elif self.iteration == max_iterations:
-                self.output.append({"end": "great success"})
+                # self.steps.append({"end": "great success"})
+                self.outcome = "ok"
                 return
             else:
-                self.output.append(
+                self.steps.append(
                     {
-                        "step": {
-                            "iteration": self.iteration,
-                            "time": self.time,
-                            "vehicles": list(
-                                map(lambda model: model.json_state(), self.scene.models)
-                            ),
-                        }
+                        "iteration": self.iteration,
+                        "time": self.time,
+                        "vehicles": list(
+                            map(lambda model: model.to_json(), self.scene.models)
+                        ),
                     }
                 )
                 self.time += dt
@@ -176,4 +183,12 @@ class SimulationRunner:
         print(f"flushing simulation output to {file}")
 
         with open(f"{file}", "w") as fp:
-            json.dump(self.output, fp, indent=2)
+            json.dump(
+                {
+                    "scene": self.scene.to_json(),
+                    "steps": self.steps,
+                    "outcome": self.outcome,
+                },
+                fp,
+                indent=2,
+            )

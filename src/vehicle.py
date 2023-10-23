@@ -13,6 +13,13 @@ class Vehicle:
         self.max_acceleration = max_acceleration
         # position and acceleration are just for visuals
 
+    def to_json(self):
+        return {
+            "length": self.length,
+            "max_deceleration": self.max_deceleration,
+            "max_acceleration": self.max_acceleration,
+        }
+
 
 def get_vehicle_from_name(class_name: str) -> type[Vehicle]:
     raise Exception("TODO, implement me")

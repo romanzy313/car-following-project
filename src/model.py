@@ -36,8 +36,8 @@ class Model:
 
         pass
 
-    def json_state(self):
-        return {"position": self.position, "velocity": self.velocity}
+    def to_json(self):
+        return {"id": self.id, "position": self.position, "velocity": self.velocity}
 
     def print_state(self):
         print(f"[{id}] position {self.position} velocty {self.velocity}")
