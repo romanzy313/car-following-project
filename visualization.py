@@ -1,8 +1,11 @@
 # import math
-import math
 import pygame
+import pygame_gui
 from visualization.car import Car
 from visualization.constants import *
+
+import math
+import json
 
 
 def rot_center(image, angle, x, y):
@@ -36,14 +39,35 @@ def blitRotate(surf, image, pos, originPos, angle):
 
 
 def drawVehicle(surf, image, angle):
+    # Calculate the new position
+    w, h = car_image.get_size()
+
+    x = vis_center[0] + (road_radius - road_width / 2) * math.sin(math.radians(angle))
+    y = vis_center[1] + (road_radius - road_width / 2) * math.cos(math.radians(angle))
+    blitRotate(surf, image, (x, y), (w / 2, h / 2), angle - 90)
+
     pass
+
+
+def load_result(name: str):
+    with open(name) as f:
+        data = json.load(f)
+        return data
+        # print(d)
 
 
 def main():
     # pygame setup
     pygame.init()
-
     screen = pygame.display.set_mode(display_size)
+    manager = pygame_gui.UIManager(display_size)
+
+    hello_button = pygame_gui.elements.UIButton(
+        relative_rect=pygame.Rect((350, 275), (100, 50)),
+        text="Say Hello",
+        manager=manager,
+    )
+
     pygame.display.set_caption("Car follower visualization")
     clock = pygame.time.Clock()
     running = True
@@ -51,7 +75,7 @@ def main():
     angle = 0
     speed = 100
 
-    w, h = car_image.get_size()
+    result = load_result("results/test_run.json")
 
     while running:
         # poll for events
@@ -60,23 +84,21 @@ def main():
             if event.type == pygame.QUIT:
                 running = False
 
+            if event.type == pygame_gui.UI_BUTTON_PRESSED:
+                if event.ui_element == hello_button:
+                    print("Hello World!")
+
+            manager.process_events(event)
+
+        manager.update(dt)
+
         # fill the screen with a color to wipe away anything from last frame
         screen.fill(display_color)
         pygame.draw.rect(screen, vis_color, vis_rect)
         pygame.draw.circle(screen, road_color, vis_center, road_radius, road_width)
 
-        # Calculate the new position
-        x = vis_center[0] + (road_radius - road_width / 2) * math.sin(
-            math.radians(angle)
-        )
-        y = vis_center[1] + (road_radius - road_width / 2) * math.cos(
-            math.radians(angle)
-        )
-
         # x = vis_center[0] + 30
         # y = vis_center[1]
-
-        blitRotate(screen, car_image, (x, y), (w / 2, h / 2), angle - 90)
 
         # screen.blit(rotate2d(car_image, (x,y), angle), (x,y))
 
@@ -87,6 +109,11 @@ def main():
         # )
         # pygame.draw.circle(screen, "red", player_pos, 40)
 
+        drawVehicle(screen, car_image, angle)
+        drawVehicle(screen, car_image, angle + 90)
+        drawVehicle(screen, car_image, angle + 180)
+        drawVehicle(screen, car_image, angle + 270)
+
         keys = pygame.key.get_pressed()
         if keys[pygame.K_w]:
             speed += 100 * dt
@@ -95,6 +122,7 @@ def main():
 
         angle += speed * dt
 
+        manager.draw_ui(screen)
         # flip() the display to put your work on screen
         pygame.display.flip()
 
