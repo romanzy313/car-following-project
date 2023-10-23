@@ -9,12 +9,6 @@ import math
 import json
 
 
-def rot_center(image, angle, x, y):
-    rotated_image = pygame.transform.rotate(image, angle)
-    new_rect = rotated_image.get_rect(center=image.get_rect(center=(x, y)).center)
-    return rotated_image, new_rect
-
-
 def blitRotate(surf, image, pos, originPos, angle):
     # offset from pivot to center
     image_rect = image.get_rect(topleft=(pos[0] - originPos[0], pos[1] - originPos[1]))
@@ -34,9 +28,9 @@ def blitRotate(surf, image, pos, originPos, angle):
     surf.blit(rotated_image, rotated_image_rect)
 
     # draw rectangle around the image
-    pygame.draw.rect(
-        surf, (255, 0, 0), (*rotated_image_rect.topleft, *rotated_image.get_size()), 2
-    )
+    # pygame.draw.rect(
+    #     surf, (0, 0, 255), (*rotated_image_rect.topleft, *rotated_image.get_size()), 2
+    # )
 
 
 def drawVehicle(surf, image, angle):
