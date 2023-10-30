@@ -1,80 +1,175 @@
+# import math
+from typing import Any, List
 import pygame
-from src.read_data import read_data
+import pygame_gui
+from visualization.car import Car
+from visualization.constants import *
+
+import math
+import json
 
 
-class Vehicle:
-    x: float
-    v: float
-    a: float
+def blit_rotate(surf, image, pos, originPos, angle):
+    # offset from pivot to center
+    image_rect = image.get_rect(topleft=(pos[0] - originPos[0], pos[1] - originPos[1]))
+    offset_center_to_pivot = pygame.math.Vector2(pos) - image_rect.center
 
-    def __init__(self):
-        # body of the constructor
-        return
+    # roatated offset from pivot to center
+    rotated_offset = offset_center_to_pivot.rotate(-angle)
 
-    def tick(self, dt, newAcceleration):
-        self.a = newAcceleration
-        self.v = self.v + newAcceleration * dt
-        self.x = self.x + self.v * dt
+    # roatetd image center
+    rotated_image_center = (pos[0] - rotated_offset.x, pos[1] - rotated_offset.y)
 
-        return
+    # get a rotated image
+    rotated_image = pygame.transform.rotate(image, angle)
+    rotated_image_rect = rotated_image.get_rect(center=rotated_image_center)
 
+    # rotate and blit the image
+    surf.blit(rotated_image, rotated_image_rect)
 
-def main():
-    # load zaar data
-    data = read_data(cfpair="AH", dataset="train")
-
-    print("data is", data)
-
-    screen_width = 1280
-    screen_height = 720
-
-    road_radius = 720 / 2 - 50
-
-    # pygame setup
-    pygame.init()
-    screen = pygame.display.set_mode((screen_width, screen_height))
-    clock = pygame.time.Clock()
-    running = True
-    dt = 0
-
-    player_pos = pygame.Vector2(screen.get_width() / 2, screen.get_height() / 2)
-
-    while running:
-        # screen =
-        center = pygame.Vector2(screen.get_width() / 2, screen.get_height() / 2)
-
-        # poll for events
-        # pygame.QUIT event means the user clicked X to close your window
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-
-        # fill the screen with a color to wipe away anything from last frame
-        screen.fill("purple")
-
-        pygame.draw.circle(screen, "red", player_pos, 40)
-
-        pygame.draw.circle(screen, "blue", center, road_radius, 20)
-
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_w]:
-            player_pos.y -= 300 * dt
-        if keys[pygame.K_s]:
-            player_pos.y += 300 * dt
-        if keys[pygame.K_a]:
-            player_pos.x -= 300 * dt
-        if keys[pygame.K_d]:
-            player_pos.x += 300 * dt
-
-        # flip() the display to put your work on screen
-        pygame.display.flip()
-
-        # limits FPS to 60
-        # dt is delta time in seconds since last frame, used for framerate-
-        # independent physics.
-        dt = clock.tick(60) / 1000
-    pygame.quit()
+    # draw rectangle around the image
+    # pygame.draw.rect(
+    #     surf, (0, 0, 255), (*rotated_image_rect.topleft, *rotated_image.get_size()), 2
+    # )
 
 
-if __name__ == "__main__":
-    main()
+def draw_vehicle(surf, image, angle):
+    # Calculate the new position
+    w, h = car_image.get_size()
+
+    x = vis_center[0] + (road_radius - road_width / 2) * math.sin(math.radians(angle))
+    y = vis_center[1] + (road_radius - road_width / 2) * math.cos(math.radians(angle))
+    blit_rotate(surf, image, (x, y), (w / 2, h / 2), angle - 90)
+
+    pass
+
+
+def load_run_result(name: str):
+    with open(name) as f:
+        data = json.load(f)
+        return data
+
+
+run_result = load_run_result("results/test_run.json")
+road_length: float = run_result["scene"]["road_length"]
+steps = run_result["steps"]
+iteration_count: int = len(steps) - 1
+outcome: str = run_result["outcome"]
+
+iteration: int = 0
+
+
+def next_iteration():
+    global iteration
+    if iteration == iteration_count:
+        iteration = 0
+    else:
+        iteration += 1
+
+
+playback_speed = 1
+
+
+def speed_up():
+    global playback_speed
+    playback_speed = min(2.0, playback_speed + 0.25)
+
+
+def slow_down():
+    global playback_speed
+    playback_speed = max(0.25, playback_speed - 0.25)
+
+
+# pygame
+pygame.init()
+screen = pygame.display.set_mode(display_size)
+pygame.display.set_caption("Car follower visualization")
+pygame.font.init()
+my_font = pygame.font.SysFont("Ubuntu", 18)
+clock = pygame.time.Clock()
+
+manager = pygame_gui.UIManager(display_size)
+
+running = True
+playing = True
+dt = 0
+
+
+def render_text(surf, text: str, position, color="white"):
+    text_surface = my_font.render(text, True, color)
+    surf.blit(text_surface, position)
+
+
+def toggle_playing():
+    global playing
+    playing = not playing
+    start_stop_button.set_text("Stop" if playing else "Start")
+    print("playing is", playing)
+
+
+start_stop_button = pygame_gui.elements.UIButton(
+    relative_rect=pygame.Rect(start_stop_rect),
+    text="Stop",
+    manager=manager,
+)
+
+frame_bar = pygame_gui.elements.UIHorizontalScrollBar(
+    manager=manager,
+    relative_rect=pygame.Rect(progress_rect),
+    visible_percentage=0.1,
+)
+frame_bar.enable_arrow_buttons = True
+
+
+while running:
+    # poll for events
+    # pygame.QUIT event means the user clicked X to close your window
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE:
+                toggle_playing()
+            if event.unicode == "+":
+                speed_up()
+            if event.key == pygame.K_MINUS:
+                slow_down()
+
+        if event.type == pygame_gui.UI_BUTTON_PRESSED:
+            if event.ui_element == start_stop_button:
+                toggle_playing()
+                # frame_bar.reset_scroll_position()
+
+        manager.process_events(event)
+
+    manager.update(dt)
+
+    # draw the basics
+    screen.fill(display_color)
+    pygame.draw.rect(screen, vis_color, vis_rect)
+    pygame.draw.circle(screen, road_color, vis_center, road_radius, road_width)
+
+    # draw vehicles
+    vehicles = steps[iteration]["vehicles"]
+    for vehicle in vehicles:
+        angle = (vehicle["position"] / road_length) * 360
+        draw_vehicle(screen, car_image, angle)
+
+    if playing:
+        next_iteration()
+
+    # draw ui
+    render_text(screen, f"Playback speed: {playback_speed}x", playback_rect)
+    render_text(screen, f"Iteration: {iteration}/{iteration_count}", iteration_rect)
+    render_text(screen, f"Outcome: {outcome}", outcome_rect)
+
+    manager.draw_ui(screen)
+    # flip() the display to put your work on screen
+    pygame.display.flip()
+
+    # limits FPS to 60
+    # dt is delta time in seconds since last frame, used for framerate-
+    # independent physics.
+    dt = clock.tick(60 * playback_speed) / 1000
+pygame.quit()

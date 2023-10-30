@@ -11,6 +11,8 @@ zarr = "*"
 pandas = "*"
 torch = "*"
 tqdm = "*"
+scikit-learn = "*"
+pygame-gui = "*"
 
 [dev-packages]
 black = "*"

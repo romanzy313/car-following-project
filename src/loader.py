@@ -22,7 +22,7 @@ def loadScene(filepath: str) -> Scene:
             max_acceleration=parse_acceleration(data["max_acceleration"]),
             max_deceleration=parse_acceleration(data["max_deceleration"]),
         )
-        scene.vehicles[data["id"]] = vehicle
+        scene.models[data["id"]] = vehicle
 
     # TODO parse agents
 
