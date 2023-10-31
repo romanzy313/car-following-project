@@ -106,15 +106,11 @@ class Model:
     def check_collision_on_last(self, first: Model, road_length: float) -> bool:
         last = self
         if (
-            road_length
-            - (
-                last.positions[-1]
-                - last.vehicle.length / 2
-                - first.positions[-1]
-                - first.vehicle.length
-            )
-            <= 0
-        ):
+            last.positions[-1]
+            + last.vehicle.length / 2
+            - first.positions[-1]
+            + first.vehicle.length / 2
+        ) >= road_length:
             print(f"LAST Vehicle {last.id} collided with {first.id}")
             return True
         return False
