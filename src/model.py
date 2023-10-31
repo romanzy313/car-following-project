@@ -1,21 +1,36 @@
+from __future__ import annotations
+import operator
+from typing import Any, List
 from src.vehicle import Vehicle
 import importlib
 
 
 class Model:
+    positions: List[float]
+    velocities: List[float]
+
     def __init__(
         self,
         id: str,
+        history_length: int,
+        dt: float,
         vehicle: Vehicle,
         initial_position: float,
         inital_velocity: float,
     ):
         self.id = id
+        self.dt = dt
         self.vehicle = vehicle
-        self.position = initial_position
-        self.velocity = inital_velocity
 
-    def apply_acceleration(self, acceleration: float, dt: float):
+        # fill initial "history"
+        self.positions = []
+        self.velocities = []
+
+        for i in range(0, history_length):
+            self.velocities.append(inital_velocity)
+            self.positions.append(initial_position + inital_velocity * dt * i)
+
+    def apply_acceleration(self, acceleration: float):
         """
         This is how acceleration is applied.
         The accelerations are hard limited by min/max
@@ -28,23 +43,85 @@ class Model:
         if filtered_acc != acceleration:
             print(f"acceleration was clamped from {acceleration} to {filtered_acc}")
 
-        # TODO this is wrong? need to double check
-        # this is fixed update, so it should be okay
-        # https://www.youtube.com/watch?v=yGhfUcPjXuE
-        self.velocity += filtered_acc * dt
-        self.position += self.velocity * dt
+        # TODO clamp velocities
 
+        newVel = self.velocities[-1] + filtered_acc * self.dt
+        newPos = self.positions[-1] + newVel * self.dt
+
+        self.velocities.append(newVel)
+        self.positions.append(newPos)
+
+        self.velocities.pop(0)
+        self.positions.pop(0)
         pass
 
     def to_json(self):
-        return {"id": self.id, "position": self.position, "velocity": self.velocity}
+        return {
+            "id": self.id,
+            "position": self.positions[-1],
+            "velocity": self.velocities[-1],
+        }
 
     def print_state(self):
-        print(f"[{id}] position {self.position} velocty {self.velocity}")
+        print(f"[{id}] position {self.positions[-1]} velocty {self.velocities[-1]}")
+
+    def get_acceleration_with_next(self, next: Model) -> float:
+        delta_positions: Any = list(map(operator.sub, self.positions, next.positions))
+        delta_velocities: Any = list(
+            map(operator.sub, self.velocities, next.velocities)
+        )
+
+        this_acc = self.tick(delta_positions, delta_velocities)
+        # print("next acc is", this_acc, "pos", delta_positions, "vel", delta_velocities)
+        return this_acc
+
+    def get_acceleration_on_last(self, first: Model, road_length: float) -> float:
+        last = self
+
+        inner_deltas_pos: Any = list(map(operator.sub, last.positions, first.positions))
+        delta_positions: Any = [*map(lambda x: road_length - x, inner_deltas_pos)]
+        delta_velocities: Any = list(
+            map(operator.sub, last.velocities, first.velocities)
+        )
+
+        this_acc = self.tick(delta_positions, delta_velocities)
+        # print("last acc is", this_acc, "pos", delta_positions, "vel", delta_velocities)
+
+        return this_acc
+
+    def check_collision_with_next(self, next: Model) -> bool:
+        this = self
+        if (
+            next.positions[-1]
+            - next.vehicle.length / 2
+            - this.positions[-1]
+            - this.vehicle.length / 2
+            <= 0
+        ):
+            print(f"NEXT Vehicle {this.id} collided with {next.id}")
+            return True
+
+        return False
+
+    def check_collision_on_last(self, first: Model, road_length: float) -> bool:
+        last = self
+        if (
+            road_length
+            - (
+                last.positions[-1]
+                - last.vehicle.length / 2
+                - first.positions[-1]
+                - first.vehicle.length
+            )
+            <= 0
+        ):
+            print(f"LAST Vehicle {last.id} collided with {first.id}")
+            return True
+        return False
 
     # abstract functions
 
-    def tick(self, delta_pos: float, delta_vel: float) -> float:
+    def tick(self, delta_pos: List[float], delta_vel: List[float]) -> float:
         """
         Abstract function
         This is a standard model evaluation function.
