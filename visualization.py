@@ -2,7 +2,7 @@
 from typing import Any, List
 import pygame
 import pygame_gui
-from visualization.constants import *
+from src.constants import *
 
 import math
 import json
