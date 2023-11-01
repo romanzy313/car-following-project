@@ -19,6 +19,7 @@ class Model:
         inital_velocity: float,
     ):
         self.id = id
+        self.name = self.__class__.__module__[7:]
         self.dt = dt
         self.vehicle = vehicle
 
@@ -62,8 +63,8 @@ class Model:
             "velocity": self.velocities[-1],
         }
 
-    def print_state(self):
-        print(f"[{id}] position {self.positions[-1]} velocty {self.velocities[-1]}")
+    def __str__(self):
+        return f"[{id}] position {self.positions[-1]} velocty {self.velocities[-1]}"
 
     def get_acceleration_with_next(self, next: Model) -> float:
         delta_positions: Any = list(map(operator.sub, self.positions, next.positions))
@@ -127,7 +128,9 @@ class Model:
         raise Exception("Abstract me!")
 
     def inject_args(self, args):
-        raise Exception("Abstract me!")
+        # its okay to do nothing i guess
+        pass
+        # raise Exception("Abstract me!")
 
 
 # https://stackoverflow.com/questions/4821104/dynamic-instantiation-from-string-name-of-a-class-in-dynamically-imported-module

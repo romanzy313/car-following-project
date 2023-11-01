@@ -1,5 +1,4 @@
 import random
-from src.model import get_model_from_name
 from src.scene import make_equadistent_scene
 from src.simulation_runner import SimulationRunner
 from src.vehicle import Vehicle
