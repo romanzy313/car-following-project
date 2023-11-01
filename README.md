@@ -2,6 +2,10 @@
 
 Project description
 
+# Run example simulation
+
+`python test_run.py && python visualization.py`
+
 # Notes
 
 - Perform inital dimension reduction on 3 second intervals of the training set.
