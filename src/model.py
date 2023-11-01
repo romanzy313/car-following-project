@@ -99,7 +99,7 @@ class Model:
             - this.vehicle.length / 2
             <= 0
         ):
-            print(f"NEXT Vehicle {this.id} collided with {next.id}")
+            # print(f"NEXT Vehicle {this.id} collided with {next.id}")
             return True
 
         return False
@@ -112,7 +112,7 @@ class Model:
             - first.positions[-1]
             + first.vehicle.length / 2
         ) >= road_length:
-            print(f"LAST Vehicle {last.id} collided with {first.id}")
+            # print(f"LAST Vehicle {last.id} collided with {first.id}")
             return True
         return False
 
@@ -137,5 +137,4 @@ class Model:
 def get_model_from_name(class_name: str) -> type[Model]:
     module = importlib.import_module(f"models.{class_name}")
     class_ = getattr(module, "Definition")
-    print("class is", class_)
     return class_

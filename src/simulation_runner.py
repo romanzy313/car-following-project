@@ -6,7 +6,7 @@ from src.scene import Scene
 
 class SimulationRunner:
     """
-    This will run the simulation until a collision is done
+    This will run the simulation until a collision is found
     """
 
     results: Any
@@ -20,8 +20,7 @@ class SimulationRunner:
         # for every vehicle run the algorythm
         print(f"doing the run for maximum {self.max_iterations} iterations")
 
-        self.results = self.scene.run()
-        print("scene result is", self.results)
+        self.results = self.scene.run(with_steps=True)
 
     def get_results(self):
         return {
@@ -30,7 +29,7 @@ class SimulationRunner:
         }
 
     def flush_to_disk(self, file: str):
-        print(f"flushing simulation output to {file}")
+        print(f"writing simulation output to {file}")
 
         with open(f"{file}", "w") as fp:
             json.dump(

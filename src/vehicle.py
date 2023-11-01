@@ -25,5 +25,4 @@ def get_vehicle_from_name(class_name: str) -> type[Vehicle]:
     raise Exception("TODO, implement me")
     module = importlib.import_module(f"vehicles.{class_name}")
     class_ = getattr(module, "Definition")
-    print("class is", class_)
     return class_

@@ -2,7 +2,6 @@
 from typing import Any, List
 import pygame
 import pygame_gui
-from visualization.car import Car
 from visualization.constants import *
 
 import math
@@ -54,7 +53,7 @@ run_result = load_run_result("results/test_run.json")
 road_length: float = run_result["scene"]["road_length"]
 steps = run_result["steps"]
 iteration_count: int = len(steps) - 1
-outcome: str = "collision" if run_result["collision"] != False else "no collision"
+outcome: str = "collision" if run_result["collided"] == True else "no collision"
 
 model_dict = {item["id"]: item for item in run_result["scene"]["models"]}
 

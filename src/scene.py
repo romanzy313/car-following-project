@@ -42,7 +42,7 @@ class Scene:
     def __str__(self):
         return f"total number of models {self.models}"
 
-    def run(self):
+    def run(self, with_steps: bool):
         time = 0.0
         iteration = 0
         collision: int | bool = False
@@ -51,8 +51,7 @@ class Scene:
         while run:
             collision = self.tick()
             if collision:
-                # self.steps.append({"end": "collision"})
-                print(f"collision at iteration {iteration}")
+                # print(f"collision at iteration {iteration}")
                 run = False
             elif iteration == self.max_iterations:
                 run = False
@@ -70,28 +69,34 @@ class Scene:
                 iteration += 1
 
         # get collision type
+        collided = collision != False
+        collision_follower_id = None
+        collision_follower_model = None
+        collision_leader_id = None
+        collision_leader_model = None
 
-        collision_data = False
-
-        collision_follower = ""
-        collision_leader = ""
         if collision:
             leader_index = collision if collision < len(self.models) - 1 else 0
 
-            collision_data = {
-                "follower_id": str(collision),
-                "follower_model": self.models[collision].name,
-                "leader_id": str(leader_index),
-                "leader_model": self.models[leader_index].name,
-            }
+            collision_follower_id = str(collision)
+            collision_follower_model = self.models[collision].name
+            collision_leader_id = str(leader_index)
+            collision_leader_model = self.models[leader_index].name
 
-        return {
+        output = {
             "end_time": time,
             "end_iteration": iteration,
-            "collision": collision_data,
-            "steps": steps,
+            "collided": collided,
+            "collision_follower_id": collision_follower_id,
+            "collision_follower_model": collision_follower_model,
+            "collision_leader_id": collision_leader_id,
+            "collision_leader_model": collision_leader_model,
         }
 
+        if with_steps:
+            output["steps"] = steps
+
+        return output
         # return run results
 
     def tick(self):
@@ -167,7 +172,7 @@ def make_a_b_scene(
     model_a_name: str,
     model_b_name: str,
     a_percentage: float,
-    total_count: int,
+    vehicle_count: int,
     vehicle: Vehicle,
     road_length: float,
     initial_velocity: float,
@@ -181,16 +186,16 @@ def make_a_b_scene(
     model_b_class = get_model_from_name(model_b_name)
 
     models: List[Model] = []
-    segment_length = road_length / total_count
+    segment_length = road_length / vehicle_count
 
     if random_seed != 0:
         random.seed(random_seed)
 
     model_choices = random.choices(
-        ["a", "b"], weights=[a_percentage, 1 - a_percentage], k=total_count
+        ["a", "b"], weights=[a_percentage, 1 - a_percentage], k=vehicle_count
     )
 
-    for i in range(0, total_count):
+    for i in range(0, vehicle_count):
         initial_position = i * segment_length
 
         choice = model_choices[i]
