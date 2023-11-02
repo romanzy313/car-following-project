@@ -28,6 +28,14 @@ def compute_delta_metrics(data):
     return data
 
 
+def preprocess_new_data(new_data, scaler, n_steps_in):
+    data_scaled = scaler.transform(new_data)
+    X_new = []
+    for i in range(len(data_scaled) - n_steps_in + 1):
+        X_new.append(data_scaled[i : i + n_steps_in, :])
+    return np.array(X_new)
+
+
 def predict_delta_acceleration(
     eval_df, models_scalers, cluster_number=1, n_steps_in=3, delta_acceleration_index=2
 ):
