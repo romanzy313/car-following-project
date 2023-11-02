@@ -28,8 +28,10 @@ class Model:
         self.positions = []
         self.velocities = []
         self.accelerations = []
+        self.timestamps = []
 
         for i in range(0, history_length):
+            self.timestamps.append(dt * i)
             self.positions.append(initial_position + inital_velocity * dt * i)
             self.velocities.append(inital_velocity)
             self.accelerations.append(0)
