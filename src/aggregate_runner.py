@@ -43,7 +43,12 @@ class AggregateSimulationRunner:
         self.model_a_args = model_a_args
         self.model_b_args = model_b_args
 
-        self.vehicle = Vehicle(length=1, max_acceleration=1, max_deceleration=-1)
+        self.vehicle = Vehicle(
+            length=1,
+            max_acceleration=1,
+            max_deceleration=1,
+            max_velocity=20,
+        )
 
         self.results = []
 

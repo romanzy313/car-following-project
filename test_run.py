@@ -8,7 +8,7 @@ def main():
     dt = 0.1
     max_iterations = 1000
     # get_model_from_name("KeepDistanceModel")
-    vehicle = Vehicle(length=1, max_acceleration=1, max_deceleration=-1)
+    vehicle = Vehicle(length=1, max_acceleration=1, max_deceleration=1, max_velocity=30)
 
     scene = make_equadistent_scene(
         dt=dt,
