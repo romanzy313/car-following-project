@@ -20,6 +20,7 @@ def main():
         vehicle_count=5,
         initial_velocity=1,
         fuzzy_position=1,
+        max_iterations=max_iterations,
     )
 
     runner = SimulationRunner(scene=scene, dt=dt, max_iterations=max_iterations)
