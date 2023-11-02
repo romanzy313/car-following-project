@@ -10,7 +10,12 @@ class Definition(Model):
     def inject_args(self, args):
         self.spread = args["spread"]
 
-    def tick(self, delta_poss: List[float], delta_vels: List[float]) -> float:
+    def tick(
+        self,
+        next_positions: List[float],
+        next_velocities: List[float],
+        next_accelerations: List[float],
+    ) -> float:
         """
         This sample model tries to keep the same position as the vehicle in the front
         """

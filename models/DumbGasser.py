@@ -10,7 +10,12 @@ class Definition(Model):
         self.gas_amount = args["gas_amount"]
         # print("injected keep distance", self.keep_distance)
 
-    def tick(self, delta_pos: List[float], delta_vel: List[float]) -> float:
+    def tick(
+        self,
+        next_positions: List[float],
+        next_velocities: List[float],
+        next_accelerations: List[float],
+    ) -> float:
         """
         This dumbass model just presses gas
         """
