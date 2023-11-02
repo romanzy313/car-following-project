@@ -84,6 +84,7 @@ class Scene:
             collision_leader_model = self.models[leader_index].name
 
         output = {
+            "progress": iteration / self.max_iterations,
             "end_time": time,
             "end_iteration": iteration,
             "collided": collided,

@@ -36,25 +36,19 @@ class Model:
         This is how acceleration is applied.
         The accelerations are hard limited by min/max
         """
-        filtered_acc = max(
-            self.vehicle.max_deceleration,
-            min(self.vehicle.max_acceleration, acceleration),
+
+        limited_acceleration = self.vehicle.limit_acceleration(acceleration)
+
+        next_velocity = self.vehicle.limit_velocity(
+            self.velocities[-1] + limited_acceleration * self.dt
         )
+        next_position = self.positions[-1] + next_velocity * self.dt
 
-        if filtered_acc != acceleration:
-            print(f"acceleration was clamped from {acceleration} to {filtered_acc}")
-
-        # TODO clamp velocities
-
-        newVel = self.velocities[-1] + filtered_acc * self.dt
-        newPos = self.positions[-1] + newVel * self.dt
-
-        self.velocities.append(newVel)
-        self.positions.append(newPos)
+        self.velocities.append(next_velocity)
+        self.positions.append(next_position)
 
         self.velocities.pop(0)
         self.positions.pop(0)
-        pass
 
     def to_json(self):
         return {
