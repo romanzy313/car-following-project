@@ -31,3 +31,14 @@ Project description
 - Linux amd driver fix `export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libstdc++.so.6`
 
 Test_change
+
+## meeting notes
+
+- Learning needs to take place over all the data, shifted by a single timestamp
+- Aggregated data only used for clustering
+- 9 Models for car following. HA, AA, AH, each has 3 clusters.
+- input: velocity, delta_velocity, delta_position... Give 30 steps. Make sure its output is correct for the next 10 steps (which is also v, delta_v, delta_p)
+- output: velocity (non-recommended) or acceleration
+- use 10 steps during runtime, learn with 10 steps aswell
+
+- we give AI delta_velocity, delta_position, initial_velocity. The output is (delta_velocity, delta_position, initial_velocity)
