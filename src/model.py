@@ -68,14 +68,25 @@ class Model:
         return f"[{id}] position {self.positions[-1]} velocty {self.velocities[-1]}"
 
     def get_acceleration_with_next(self, next: Model) -> float:
-        this_acc = self.tick(next.positions, next.velocities, next.accelerations)
+        delta_positions: Any = list(map(operator.sub, self.positions, next.positions))
+        delta_velocities: Any = list(
+            map(operator.sub, self.velocities, next.velocities)
+        )
+
+        this_acc = self.tick(self.velocities, delta_positions, delta_velocities)
         # print("next acc is", this_acc, "pos", delta_positions, "vel", delta_velocities)
         return this_acc
 
     def get_acceleration_on_last(self, first: Model, road_length: float) -> float:
-        first_real_pos = list(map(lambda x: x + road_length, first.positions))
+        last = self
 
-        this_acc = self.tick(first_real_pos, first.velocities, first.accelerations)
+        inner_deltas_pos: Any = list(map(operator.sub, last.positions, first.positions))
+        delta_positions: Any = [*map(lambda x: road_length - x, inner_deltas_pos)]
+        delta_velocities: Any = list(
+            map(operator.sub, last.velocities, first.velocities)
+        )
+
+        this_acc = self.tick(self.velocities, delta_positions, delta_velocities)
         # print("last acc is", this_acc, "pos", delta_positions, "vel", delta_velocities)
 
         return this_acc
@@ -110,10 +121,9 @@ class Model:
 
     def tick(
         self,
-        # next: Model
-        next_positions: List[float],
-        next_velocities: List[float],
-        next_accelerations: List[float],  # this is a frame behind but its okay?
+        follower_velocities: List[float],
+        delta_positions: List[float],
+        delta_velocities: List[float],
     ) -> float:
         """
         Abstract function

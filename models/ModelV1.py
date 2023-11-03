@@ -112,43 +112,44 @@ class Definition(Model):
     def tick(
         self,
         # next: Model,
-        next_positions: List[float],
-        next_velocities: List[float],
-        next_accelerations: List[float],  # this is a frame behind but its okay?
+        follower_velocities: List[float],
+        delta_positions: List[float],
+        delta_velocities: List[float],
     ) -> float:
-        pre_data = pd.DataFrame(
-            {
-                # "l_follower": self.vehicle.length,
-                # "l_leader": next.vehicle.length,
-                "time": np.round(self.timestamps, 1),
-                "x_follower": self.positions,
-                "v_follower": self.velocities,
-                "a_follower": self.accelerations,
-                "x_leader": next_positions,
-                "v_leader": next_velocities,
-                "a_leader": next_accelerations,
-            }
-        )
+        return 0
+        # pre_data = pd.DataFrame(
+        #     {
+        #         # "l_follower": self.vehicle.length,
+        #         # "l_leader": next.vehicle.length,
+        #         "time": np.round(self.timestamps, 1),
+        #         "x_follower": self.positions,
+        #         "v_follower": self.velocities,
+        #         "a_follower": self.accelerations,
+        #         "x_leader": next_positions,
+        #         "v_leader": next_velocities,
+        #         "a_leader": next_accelerations,
+        #     }
+        # )
 
-        # print("pre_data dataframe")
-        # print(pre_data)
+        # # print("pre_data dataframe")
+        # # print(pre_data)
 
-        eval_df = compute_delta_metrics(pre_data)
+        # eval_df = compute_delta_metrics(pre_data)
 
-        # print("eval_df dataframe")
-        # print(eval_df)
+        # # print("eval_df dataframe")
+        # # print(eval_df)
 
-        predirected_acceleration = predict_delta_acceleration(
-            eval_df,
-            self.model_scalers,
-            cluster_number=1,
-            n_steps_in=3,
-            delta_acceleration_index=4,
-        )
+        # predirected_acceleration = predict_delta_acceleration(
+        #     eval_df,
+        #     self.model_scalers,
+        #     cluster_number=1,
+        #     n_steps_in=3,
+        #     delta_acceleration_index=4,
+        # )
 
-        if np.isnan(predirected_acceleration):
-            predirected_acceleration = 0
+        # if np.isnan(predirected_acceleration):
+        #     predirected_acceleration = 0
 
-        # print(f"predicted acceleration {predirected_acceleration}")
+        # # print(f"predicted acceleration {predirected_acceleration}")
 
-        return predirected_acceleration
+        # return predirected_acceleration
