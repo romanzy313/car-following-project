@@ -7,7 +7,7 @@ from typing import Any, List
 
 # 10 datapoints from the past are used for history (10 * 0.1 = 1 second of diving history)
 # ugly hardcoded values for now
-history_length = 10
+history_length = 3
 
 
 class Scene:
@@ -142,8 +142,8 @@ def make_equadistent_scene(
     vehicle_count: int,
     initial_velocity: float,
     fuzzy_position: float,  # by how much positions can shift
+    max_iterations: int,
     dt: float = 0.1,
-    max_iterations: int = 5000,
 ):
     model_class = get_model_from_name(model_name)
     models: List[Model] = []
@@ -160,7 +160,7 @@ def make_equadistent_scene(
             history_length=history_length,  # hardcoded for now
             vehicle=vehicle,
             initial_position=initial_position,
-            inital_velocity=initial_velocity,
+            inital_velocity=initial_velocity + random.uniform(-0.1, 0.1),
         )
         model.inject_args(model_args)
 

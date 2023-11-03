@@ -8,6 +8,7 @@ import importlib
 class Model:
     positions: List[float]
     velocities: List[float]
+    accelerations: List[float]
 
     def __init__(
         self,
@@ -26,10 +27,14 @@ class Model:
         # fill initial "history"
         self.positions = []
         self.velocities = []
+        self.accelerations = []
+        self.timestamps = []
 
         for i in range(0, history_length):
-            self.velocities.append(inital_velocity)
+            self.timestamps.append(dt * i)
             self.positions.append(initial_position + inital_velocity * dt * i)
+            self.velocities.append(inital_velocity)
+            self.accelerations.append(0)
 
     def apply_acceleration(self, acceleration: float):
         """
@@ -37,16 +42,18 @@ class Model:
         The accelerations are hard limited by min/max
         """
 
-        limited_acceleration = self.vehicle.limit_acceleration(acceleration)
+        next_acceleration = self.vehicle.limit_acceleration(acceleration)
 
         next_velocity = self.vehicle.limit_velocity(
-            self.velocities[-1] + limited_acceleration * self.dt
+            self.velocities[-1] + next_acceleration * self.dt
         )
         next_position = self.positions[-1] + next_velocity * self.dt
 
+        self.accelerations.append(next_acceleration)
         self.velocities.append(next_velocity)
         self.positions.append(next_position)
 
+        self.accelerations.pop(0)
         self.velocities.pop(0)
         self.positions.pop(0)
 
@@ -61,25 +68,14 @@ class Model:
         return f"[{id}] position {self.positions[-1]} velocty {self.velocities[-1]}"
 
     def get_acceleration_with_next(self, next: Model) -> float:
-        delta_positions: Any = list(map(operator.sub, self.positions, next.positions))
-        delta_velocities: Any = list(
-            map(operator.sub, self.velocities, next.velocities)
-        )
-
-        this_acc = self.tick(delta_positions, delta_velocities)
+        this_acc = self.tick(next.positions, next.velocities, next.accelerations)
         # print("next acc is", this_acc, "pos", delta_positions, "vel", delta_velocities)
         return this_acc
 
     def get_acceleration_on_last(self, first: Model, road_length: float) -> float:
-        last = self
+        first_real_pos = list(map(lambda x: x + road_length, first.positions))
 
-        inner_deltas_pos: Any = list(map(operator.sub, last.positions, first.positions))
-        delta_positions: Any = [*map(lambda x: road_length - x, inner_deltas_pos)]
-        delta_velocities: Any = list(
-            map(operator.sub, last.velocities, first.velocities)
-        )
-
-        this_acc = self.tick(delta_positions, delta_velocities)
+        this_acc = self.tick(first_real_pos, first.velocities, first.accelerations)
         # print("last acc is", this_acc, "pos", delta_positions, "vel", delta_velocities)
 
         return this_acc
@@ -112,7 +108,13 @@ class Model:
 
     # abstract functions
 
-    def tick(self, delta_pos: List[float], delta_vel: List[float]) -> float:
+    def tick(
+        self,
+        # next: Model
+        next_positions: List[float],
+        next_velocities: List[float],
+        next_accelerations: List[float],  # this is a frame behind but its okay?
+    ) -> float:
         """
         Abstract function
         This is a standard model evaluation function.
