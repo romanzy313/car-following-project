@@ -12,7 +12,11 @@ history_length = 3
 
 class Scene:
     # speed_limit: float
-    models: List[Model] = []
+    models: List[Model]
+
+    # metrics variables
+    stat_velocity: List[float]
+    stat_ttc: List[float]  # time to collisions
 
     # TODO collect statistics on the run
     # Like how many near misses there are
@@ -24,6 +28,8 @@ class Scene:
         self.road_length = road_length
         self.dt = dt
         self.max_iterations = max_iterations
+        self.stat_velocity = []
+        self.stat_ttc = []
 
         # self.dt = dt
         # pass
@@ -114,6 +120,8 @@ class Scene:
         for i in range(0, len(self.models)):
             self.models[i].apply_acceleration(accelerations[i])
 
+        # collect metrics here
+
         # step 4, being lazy for now
         collisionId = self.check_collisions()
 
@@ -132,6 +140,25 @@ class Scene:
             return len(self.models) - 1
 
         return False
+
+    def collect_metrics(self):
+        # metrics such as average velocity and average time to collision
+        # just add all of them
+
+        for model in self.models:
+            self.stat_velocity.append(model.velocities[-1])
+
+        # compute ttc here...
+
+        for i in range(0, len(self.models) - 1):
+            this_acc = self.models[i].get_acceleration_with_next(self.models[i + 1])
+            accelerations.append(this_acc)
+
+        last_acc = self.models[-1].get_acceleration_on_last(
+            self.models[0], self.road_length
+        )
+
+        pass
 
 
 def make_equadistent_scene(
