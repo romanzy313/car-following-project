@@ -20,4 +20,4 @@ class Definition(Model):
         This sample model tries to keep the same position as the vehicle in the front
         """
 
-        return random.uniform(0, self.spread)
+        return random.uniform(-self.spread, self.spread)

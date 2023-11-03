@@ -67,23 +67,43 @@ class Model:
     def __str__(self):
         return f"[{id}] position {self.positions[-1]} velocty {self.velocities[-1]}"
 
-    def get_acceleration_with_next(self, next: Model) -> float:
+    def get_deltas_with_next(self, next: Model):
         delta_positions: Any = list(map(operator.sub, self.positions, next.positions))
         delta_velocities: Any = list(
             map(operator.sub, self.velocities, next.velocities)
         )
+        # print(
+        #     "delta velocities",
+        #     delta_velocities,
+        #     "self",
+        #     self.velocities,
+        #     "next",
+        #     next.velocities,
+        # )
+        return (delta_positions, delta_velocities)
 
-        this_acc = self.tick(self.velocities, delta_positions, delta_velocities)
-        # print("next acc is", this_acc, "pos", delta_positions, "vel", delta_velocities)
-        return this_acc
-
-    def get_acceleration_on_last(self, first: Model, road_length: float) -> float:
+    def get_deltas_on_last(self, first: Model, road_length: float):
         last = self
 
         inner_deltas_pos: Any = list(map(operator.sub, last.positions, first.positions))
         delta_positions: Any = [*map(lambda x: road_length - x, inner_deltas_pos)]
         delta_velocities: Any = list(
             map(operator.sub, last.velocities, first.velocities)
+        )
+        return (delta_positions, delta_velocities)
+
+    def tick_and_get_acceleration_with_next(self, next: Model) -> float:
+        (delta_positions, delta_velocities) = self.get_deltas_with_next(next)
+
+        this_acc = self.tick(self.velocities, delta_positions, delta_velocities)
+        # print("next acc is", this_acc, "pos", delta_positions, "vel", delta_velocities)
+        return this_acc
+
+    def tick_and_get_acceleration_on_last(
+        self, first: Model, road_length: float
+    ) -> float:
+        (delta_positions, delta_velocities) = self.get_deltas_on_last(
+            first, road_length
         )
 
         this_acc = self.tick(self.velocities, delta_positions, delta_velocities)
