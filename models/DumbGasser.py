@@ -1,14 +1,14 @@
-import random
 from typing import List
 from src.model import Model
-from src.vehicle import Vehicle
 
 
 class Definition(Model):
-    spread = 0
+    gas_amount = 0
 
     def inject_args(self, args):
-        self.spread = args["spread"]
+        # pass
+        self.gas_amount = args["gas_amount"]
+        # print("injected keep distance", self.keep_distance)
 
     def tick(
         self,
@@ -17,7 +17,8 @@ class Definition(Model):
         next_accelerations: List[float],
     ) -> float:
         """
-        This sample model tries to keep the same position as the vehicle in the front
+        This dumbass model just presses gas
         """
 
-        return random.uniform(0, self.spread)
+        return self.gas_amount
+        # return super().tick(delta_pos, delta_vel)
