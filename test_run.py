@@ -16,9 +16,9 @@ def main():
         model_name="ModelV1",
         model_args={"model_type": "H", "data_file": "./models/H_models_scalers.pth"},
         vehicle=vehicle,
-        road_length=40,
-        vehicle_count=5,
-        initial_velocity=1,
+        road_length=200,
+        vehicle_count=10,
+        initial_velocity=10,
         fuzzy_position=1,
         max_iterations=max_iterations,
     )
