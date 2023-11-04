@@ -1,18 +1,24 @@
+import math
 import random
 from models import RandomAcceleration
 from src.vehicle import Vehicle
 from src.model import Model, get_model_from_name
 from models import *
 from typing import Any, List
+from statistics import mean, median
 
 # 10 datapoints from the past are used for history (10 * 0.1 = 1 second of diving history)
 # ugly hardcoded values for now
-history_length = 3
+history_length = 10
 
 
 class Scene:
     # speed_limit: float
-    models: List[Model] = []
+    models: List[Model]
+
+    # metrics variables
+    stat_velocity: List[float]
+    stat_ttc: List[float]  # time to collisions
 
     # TODO collect statistics on the run
     # Like how many near misses there are
@@ -24,6 +30,8 @@ class Scene:
         self.road_length = road_length
         self.dt = dt
         self.max_iterations = max_iterations
+        self.stat_velocity = []
+        self.stat_ttc = []
 
         # self.dt = dt
         # pass
@@ -56,6 +64,7 @@ class Scene:
             elif iteration == self.max_iterations:
                 run = False
             else:
+                self.sample_metrics()
                 steps.append(
                     {
                         "iteration": iteration,
@@ -63,6 +72,7 @@ class Scene:
                         "vehicles": list(
                             map(lambda model: model.to_json(), self.models)
                         ),
+                        # maybe lets append the statistics here?
                     }
                 )
                 time += self.dt
@@ -97,22 +107,28 @@ class Scene:
         if with_steps:
             output["steps"] = steps
 
+        output.update(self.collect_metrics())
+
         return output
         # return run results
 
     def tick(self):
         accelerations = []
         for i in range(0, len(self.models) - 1):
-            this_acc = self.models[i].get_acceleration_with_next(self.models[i + 1])
+            this_acc = self.models[i].tick_and_get_acceleration_with_next(
+                self.models[i + 1]
+            )
             accelerations.append(this_acc)
 
-        last_acc = self.models[-1].get_acceleration_on_last(
+        last_acc = self.models[-1].tick_and_get_acceleration_on_last(
             self.models[0], self.road_length
         )
         accelerations.append(last_acc)
         # step 3
         for i in range(0, len(self.models)):
             self.models[i].apply_acceleration(accelerations[i])
+
+        # collect metrics here
 
         # step 4, being lazy for now
         collisionId = self.check_collisions()
@@ -132,6 +148,45 @@ class Scene:
             return len(self.models) - 1
 
         return False
+
+    def sample_metrics(self):
+        # metrics such as average velocity and average time to collision
+        # just add all of them
+
+        for model in self.models:
+            self.stat_velocity.append(model.velocities[-1])
+
+        # compute ttc here...
+
+        for i in range(0, len(self.models) - 1):
+            (delta_positions, delta_velocities) = self.models[i].get_deltas_with_next(
+                self.models[i + 1]
+            )
+            # print("deltas", delta_positions, delta_velocities)
+            if delta_velocities[-1] != 0:
+                ttc = delta_positions[-1] / delta_velocities[-1]
+                # need to account for inifinite values, for now just drop it
+                if math.isfinite(ttc):
+                    self.stat_ttc.append(ttc)
+
+        (delta_positions, delta_velocities) = self.models[-1].get_deltas_on_last(
+            self.models[0], self.road_length
+        )
+        if delta_velocities[-1] != 0:
+            ttc = delta_positions[-1] / delta_velocities[-1]
+            # need to account for inifinite values, just drop it
+            if math.isfinite(ttc):
+                self.stat_ttc.append(ttc)
+
+    def collect_metrics(self):
+        # print("stat_ttc", self.stat_ttc)
+
+        return {
+            "mean_velocities": mean(self.stat_velocity),
+            "median_velocities": median(self.stat_velocity),
+            "mean_ttc": None if len(self.stat_ttc) == 0 else mean(self.stat_ttc),
+            "median_ttc": None if len(self.stat_ttc) == 0 else median(self.stat_ttc),
+        }
 
 
 def make_equadistent_scene(
