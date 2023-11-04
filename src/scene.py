@@ -9,7 +9,7 @@ from statistics import mean, median
 
 # 10 datapoints from the past are used for history (10 * 0.1 = 1 second of diving history)
 # ugly hardcoded values for now
-history_length = 3
+history_length = 10
 
 
 class Scene:
