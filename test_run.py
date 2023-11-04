@@ -15,7 +15,7 @@ def main():
         # model_name="RandomAcceleration",
         # model_args={"spread": 0.1},
         model_name="ModelV1",
-        model_args={"model_type": "H", "data_file": "./src/model_scaler_cluster_0.pth"},
+        model_args={"model_type": "H", "data_file": "./src/model_scaler_cluster_1.pth"},
         vehicle=vehicle,
         road_length=200,
         vehicle_count=10,

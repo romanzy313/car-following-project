@@ -6,7 +6,7 @@ from src.vehicle import Vehicle
 
 def xfrange(start, stop, step):
     i = 0
-    while start + i * step < stop:
+    while start + i * step <= stop:
         yield start + i * step
         i += 1
 

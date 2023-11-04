@@ -47,12 +47,12 @@ class Definition(Model):
 
         delta_vels = self.model.predict(runtime_data)
 
-        print("all deltas")
-        print(delta_vels)
+        # print("all deltas")
+        # print(delta_vels)
 
-        result_vel = delta_vels[1][0] * self.dt
+        result_acceleration = delta_vels[1][0] * self.dt
 
-        return result_vel
+        return result_acceleration
         # pre_data = pd.DataFrame(
         #     {
         #         # "l_follower": self.vehicle.length,
