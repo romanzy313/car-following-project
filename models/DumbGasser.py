@@ -12,9 +12,9 @@ class Definition(Model):
 
     def tick(
         self,
-        next_positions: List[float],
-        next_velocities: List[float],
-        next_accelerations: List[float],
+        follower_velocities: List[float],
+        delta_positions: List[float],
+        delta_velocities: List[float],
     ) -> float:
         """
         This dumbass model just presses gas
