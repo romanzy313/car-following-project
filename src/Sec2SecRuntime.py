@@ -56,7 +56,7 @@ class Seq2SeqRuntime:
         # Extract the scaler from the checkpoint
         self.scaler = self.checkpoint["scaler"]
 
-    def preprocess_data_for_inference(self, df, n_steps_in=30, n_steps_out=10):
+    def preprocess_data_for_inference(self, df, n_steps_in, n_steps_out):
         # Normalize the data
         data_normalized = self.scaler.transform(
             df
@@ -124,7 +124,6 @@ class Seq2SeqRuntime:
         # print(f"first predict", y_first_pred.shape)
         # print(y_first_pred)
         # Inverse transform the predictions to the original scale
-
         y_first_pred_original = self.scaler.inverse_transform(y_first_pred)
 
         return y_first_pred_original

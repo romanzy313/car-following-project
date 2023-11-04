@@ -49,7 +49,7 @@ def load_run_result(name: str):
         return data
 
 
-run_result = load_run_result("results/test_run.json")
+run_result = load_run_result("results/test_suite.json")
 road_length: float = run_result["scene"]["road_length"]
 steps = run_result["steps"]
 iteration_count: int = len(steps) - 1
@@ -157,7 +157,15 @@ while running:
     vehicles = steps[iteration]["vehicles"]
     for vehicle in vehicles:
         angle = (vehicle["position"] / road_length) * 360
-        draw_vehicle(screen, car_image, angle)
+
+        id = vehicle["id"]
+        display = model_dict[id]["display"]
+
+        if display == "car":
+            draw_vehicle(screen, car_image, angle)
+        else:
+            # draw as a rechtangle??
+            draw_vehicle(screen, truck_image, angle)
 
     if playing:
         next_iteration()

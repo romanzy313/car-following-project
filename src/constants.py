@@ -11,6 +11,7 @@ road_width = 40
 road_color = (255, 255, 255)
 
 car_image = pygame.image.load("assets/car_1.png")
+truck_image = pygame.image.load("assets/car-truck5.png")
 
 car_image_rect = car_image.get_rect()
 

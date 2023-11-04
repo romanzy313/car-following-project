@@ -24,8 +24,14 @@ class Scene:
     # Like how many near misses there are
 
     def __init__(
-        self, models: List[Model], road_length: float, dt: float, max_iterations: int
+        self,
+        models: List[Model],
+        road_length: float,
+        max_iterations: int,
+        name: str = "unnamed",
+        dt: float = 0.1,
     ) -> None:
+        self.name = name
         self.models = models
         self.road_length = road_length
         self.dt = dt
@@ -39,7 +45,11 @@ class Scene:
     def to_json(self):
         def extract(model: Model):
             data = model.to_json()
-            return {"id": model.id, "name": model.name}
+            return {
+                "id": model.id,
+                "name": model.name,
+                "display": model.vehicle.display,
+            }
 
         return {
             "road_length": self.road_length,
@@ -50,42 +60,57 @@ class Scene:
     def __str__(self):
         return f"total number of models {self.models}"
 
-    def run(self, with_steps: bool):
+    def run(self, with_steps: bool = True, with_metrics: bool = True):
         time = 0.0
         iteration = 0
-        collision: int | bool = False
+        collision: int | None = None
         run = True
         steps: List[Any] = []
+        if with_metrics:
+            self.sample_metrics()
+        if with_steps:
+            steps.append(
+                {
+                    "iteration": iteration,
+                    "time": time,
+                    "vehicles": list(map(lambda model: model.to_json(), self.models)),
+                    # maybe lets append the statistics here?
+                }
+            )
+
         while run:
+            time += self.dt
+            iteration += 1
             collision = self.tick()
-            if collision:
-                # print(f"collision at iteration {iteration}")
+
+            if collision is not None:
+                print(f"collision at iteration {iteration}")
                 run = False
             elif iteration == self.max_iterations:
                 run = False
             else:
-                self.sample_metrics()
-                steps.append(
-                    {
-                        "iteration": iteration,
-                        "time": time,
-                        "vehicles": list(
-                            map(lambda model: model.to_json(), self.models)
-                        ),
-                        # maybe lets append the statistics here?
-                    }
-                )
-                time += self.dt
-                iteration += 1
+                if with_metrics:
+                    self.sample_metrics()
+                if with_steps:
+                    steps.append(
+                        {
+                            "iteration": iteration,
+                            "time": time,
+                            "vehicles": list(
+                                map(lambda model: model.to_json(), self.models)
+                            ),
+                            # maybe lets append the statistics here?
+                        }
+                    )
 
         # get collision type
-        collided = collision != False
+        collided = collision is not None
         collision_follower_id = None
         collision_follower_model = None
         collision_leader_id = None
         collision_leader_model = None
 
-        if collision:
+        if collision is not None:
             leader_index = collision if collision < len(self.models) - 1 else 0
 
             collision_follower_id = str(collision)
@@ -106,8 +131,8 @@ class Scene:
 
         if with_steps:
             output["steps"] = steps
-
-        output.update(self.collect_metrics())
+        if with_metrics:
+            output.update(self.collect_metrics())
 
         return output
         # return run results
@@ -135,8 +160,8 @@ class Scene:
 
         return collisionId
 
-    def check_collisions(self) -> int | bool:
-        for i in range(0, len(self.models) - 2):
+    def check_collisions(self) -> int | None:
+        for i in range(0, len(self.models) - 1):
             collided = self.models[i].check_collision_with_next(self.models[i + 1])
             if collided:
                 return i
@@ -147,7 +172,7 @@ class Scene:
         if collided:
             return len(self.models) - 1
 
-        return False
+        return None
 
     def sample_metrics(self):
         # metrics such as average velocity and average time to collision
@@ -182,8 +207,12 @@ class Scene:
         # print("stat_ttc", self.stat_ttc)
 
         return {
-            "mean_velocities": mean(self.stat_velocity),
-            "median_velocities": median(self.stat_velocity),
+            "mean_velocities": None
+            if len(self.stat_velocity) == 0
+            else mean(self.stat_velocity),
+            "median_velocities": None
+            if len(self.stat_velocity) == 0
+            else median(self.stat_velocity),
             "mean_ttc": None if len(self.stat_ttc) == 0 else mean(self.stat_ttc),
             "median_ttc": None if len(self.stat_ttc) == 0 else median(self.stat_ttc),
         }
@@ -218,10 +247,9 @@ def make_equadistent_scene(
             inital_velocity=initial_velocity + random.uniform(-0.1, 0.1),
         )
         model.inject_args(model_args)
-
         models.append(model)
 
-    return Scene(models, road_length, dt, max_iterations)
+    return Scene(models, road_length, max_iterations)
 
 
 def make_a_b_scene(
@@ -273,4 +301,4 @@ def make_a_b_scene(
 
         models.append(model)
 
-    return Scene(models, road_length, dt, max_iterations)
+    return Scene(models, road_length, max_iterations)

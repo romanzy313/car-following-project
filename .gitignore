@@ -2,5 +2,4 @@ __pycache__
 
 .DS_Store
 
-results/test_run.json
-results/test_aggregate.json
+results/test_*.json

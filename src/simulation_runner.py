@@ -11,16 +11,17 @@ class SimulationRunner:
 
     results: Any
 
-    def __init__(self, scene: Scene, dt: float, max_iterations: int) -> None:
+    def __init__(self, scene: Scene, dt: float = 0.1) -> None:
         self.scene = scene
         self.dt = dt
-        self.max_iterations = max_iterations
 
-    def run(self) -> None:
+    def run(self, with_steps: bool, with_statistics: bool) -> bool:
         # for every vehicle run the algorythm
-        print(f"doing the run for maximum {self.max_iterations} iterations")
 
-        self.results = self.scene.run(with_steps=True)
+        self.results = self.scene.run(with_steps=with_steps)
+
+        success = self.results["collided"] is None
+        return success
 
     def get_results(self):
         return {
