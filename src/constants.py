@@ -24,3 +24,7 @@ iteration_rect = (620 + 10, 50 + 20)
 outcome_rect = (620 + 10, 50 + 20 + 20)
 
 progress_rect = (0, 620 + 10, 920, 30)
+
+
+history_length = 10
+dt = 0.1

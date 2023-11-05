@@ -1,5 +1,7 @@
 import math
 import random
+
+import numpy as np
 from src.vehicle import Vehicle
 from src.model import Model, get_model_from_name
 from typing import Any, List
@@ -18,6 +20,7 @@ class Scene:
     # metrics variables
     stat_velocity: List[float]
     stat_ttc: List[float]  # time to collisions
+    stat_delta_pos: List[float]
 
     # TODO collect statistics on the run
     # Like how many near misses there are
@@ -37,6 +40,7 @@ class Scene:
         self.max_iterations = max_iterations
         self.stat_velocity = []
         self.stat_ttc = []
+        self.stat_delta_pos = []
 
         # self.dt = dt
         # pass
@@ -158,6 +162,12 @@ class Scene:
     def sample_metrics(self):
         # metrics such as average velocity and average time to collision
         # just add all of them
+        def add_ttc(delta_positions, delta_velocities):
+            if delta_velocities[-1] != 0:
+                ttc = delta_positions[-1] / delta_velocities[-1]
+                # need to account for inifinite values, for now just drop it
+                if math.isfinite(ttc):
+                    self.stat_ttc.append(ttc)
 
         for model in self.models:
             self.stat_velocity.append(model.velocities[-1])
@@ -168,35 +178,42 @@ class Scene:
             (delta_positions, delta_velocities) = self.models[i].get_deltas_with_next(
                 self.models[i + 1]
             )
+            add_ttc(delta_positions, delta_velocities)
+            self.stat_delta_pos.append(delta_positions[-1])
             # print("deltas", delta_positions, delta_velocities)
-            if delta_velocities[-1] != 0:
-                ttc = delta_positions[-1] / delta_velocities[-1]
-                # need to account for inifinite values, for now just drop it
-                if math.isfinite(ttc):
-                    self.stat_ttc.append(ttc)
 
         (delta_positions, delta_velocities) = self.models[-1].get_deltas_on_last(
             self.models[0], self.road_length
         )
-        if delta_velocities[-1] != 0:
-            ttc = delta_positions[-1] / delta_velocities[-1]
-            # need to account for inifinite values, just drop it
-            if math.isfinite(ttc):
-                self.stat_ttc.append(ttc)
+        add_ttc(delta_positions, delta_velocities)
+        self.stat_delta_pos.append(delta_positions[-1])
 
     def collect_metrics(self):
-        # print("stat_ttc", self.stat_ttc)
+        def allStats(name: str, array: List[float]):
+            if len(array) == 0:
+                return {
+                    f"{name}_mean": None,
+                    f"{name}_median": None,
+                    f"{name}_max": None,
+                    f"{name}_min": None,
+                }
+
+            vals = np.array(array)
+            return {
+                f"{name}_mean": np.mean(vals),
+                f"{name}_median": np.median(vals),
+                f"{name}_max": np.max(vals),
+                f"{name}_min": np.min(vals),
+            }
 
         return {
-            "mean_velocities": None
-            if len(self.stat_velocity) == 0
-            else mean(self.stat_velocity),
-            "median_velocities": None
-            if len(self.stat_velocity) == 0
-            else median(self.stat_velocity),
-            "mean_ttc": None if len(self.stat_ttc) == 0 else mean(self.stat_ttc),
-            "median_ttc": None if len(self.stat_ttc) == 0 else median(self.stat_ttc),
+            **allStats("velocity", self.stat_velocity),
+            **allStats("ttc", self.stat_ttc),
+            **allStats("delta_pos", self.stat_delta_pos),
         }
+
+    def get_model_positions(self):
+        return list(map(lambda x: x.positions[-1], self.models))
 
 
 def make_equadistent_scene(

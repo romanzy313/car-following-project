@@ -6,6 +6,17 @@ from src.constants import *
 
 import math
 import json
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    "-f",
+    "--file",
+    nargs="?",
+    help="which simulation file to run",
+    default="results/test_run.json",
+)
+args = parser.parse_args()
 
 
 def blit_rotate(surf, image, pos, originPos, angle):
@@ -49,7 +60,8 @@ def load_run_result(name: str):
         return data
 
 
-run_result = load_run_result("results/test_run.json")
+# run_result = load_run_result(args.file if args.file else "results/test_run.json")
+run_result = load_run_result(args.file)
 road_length: float = run_result["scene"]["road_length"]
 steps = run_result["steps"]
 iteration_count: int = len(steps) - 1

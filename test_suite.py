@@ -5,25 +5,6 @@ from src.test_runner import TestRunner
 from src.vehicle import Vehicle
 
 
-# always start after
-def make_linear_controller(
-    start: float, start_iteration: int, end_iteration: int, final: float
-):
-    def run(iteration: int):
-        if iteration <= start_iteration:
-            return start
-        elif iteration <= end_iteration:
-            progress = (iteration - start_iteration) / (
-                end_iteration - start_iteration
-            )  # Progress from 0 to 1
-            # print("progress", progress)
-            return start + progress * (final - start)
-        else:
-            return final
-
-    return run
-
-
 def main():
     test_runner = TestRunner(False)
 
