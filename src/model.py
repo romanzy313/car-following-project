@@ -77,6 +77,13 @@ class Model:
         delta_velocities: Any = list(
             map(operator.sub, self.velocities, next.velocities)
         )
+
+        if True in (t < 0 for t in delta_positions):
+            print(
+                f"[{self.name}] NEXT Negative delta position detected!!!",
+                delta_positions,
+            )
+
         # print("delta pos with next", delta_positions, "delta vel", delta_velocities)
 
         return (delta_positions, delta_velocities)
@@ -97,6 +104,13 @@ class Model:
         delta_velocities: Any = list(
             map(operator.sub, last.velocities, first.velocities)
         )
+
+        if True in (t < 0 for t in delta_positions):
+            print(
+                f"[{self.name}] LAST Negative delta position detected!!!",
+                delta_positions,
+            )
+
         return (delta_positions, delta_velocities)
 
     def tick_and_get_acceleration_with_next(self, next: Model) -> float:

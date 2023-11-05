@@ -1,10 +1,7 @@
 import math
 import random
-from time import sleep
-from models import RandomAcceleration
 from src.vehicle import Vehicle
 from src.model import Model, get_model_from_name
-from models import *
 from typing import Any, List
 from statistics import mean, median
 from tqdm import tqdm
@@ -89,7 +86,6 @@ class Scene:
             time += self.dt
             collision = self.tick()
             if collision is not None:
-                print("early collision exit")
                 break
 
         collided = collision is not None
@@ -141,9 +137,6 @@ class Scene:
         for i in range(0, len(self.models)):
             self.models[i].apply_acceleration(accelerations[i])
 
-        # collect metrics here
-
-        # step 4, being lazy for now
         collisionId = self.check_collisions()
 
         return collisionId
@@ -171,7 +164,7 @@ class Scene:
 
         # compute ttc here...
 
-        for i in range(0, len(self.models) - 1):
+        for i in range(len(self.models) - 1):
             (delta_positions, delta_velocities) = self.models[i].get_deltas_with_next(
                 self.models[i + 1]
             )

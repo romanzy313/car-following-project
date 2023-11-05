@@ -30,9 +30,7 @@ def main():
 
     runner.run()
 
-    print("starting to flush to disk...")
-
-    runner.flush_to_disk("results/test_run.json")
+    runner.flush_to_disk("./results/test_run.json")
 
 
 if __name__ == "__main__":
