@@ -18,19 +18,8 @@ class Definition(Model):
         assert model_file, "data file not provided"
         self.model = Seq2SeqRuntime(model_file)
         self.name = f"ModelV1_{self.model_type}"
-        print(f"{self.name} loaded data_file {model_file}")
+        # print(f"{self.name} loaded data_file {model_file}")
 
-    # this really needs
-    # p_follower
-    # v_follower
-    # a_follower
-    # delta_position
-    # delta_velocity
-    # delta_acceleration
-    # jerk_follower data['jerk_follower'] = np.gradient(data['a_follower'], data['time'])
-    # time_headway data['time_headway'] = data['delta_position'] / data['v_follower']
-    # TTC     data["TTC"] = data["delta_position"] / data["delta_velocity"]
-    # TTC_min data['TTC_min'] = data['TTC']???
     def tick(
         self,
         follower_velocities: List[float],
@@ -45,14 +34,25 @@ class Definition(Model):
             }
         )
 
-        delta_vels = self.model.predict(runtime_data)
+        prophecy = self.model.predict(runtime_data)
 
-        # print("all deltas")
-        # print(delta_vels)
+        # print("simulation output is", prophecy)
 
-        result_acceleration = delta_vels[1][0] * self.dt
+        result_acceleration = prophecy[0][1]
 
-        return result_acceleration
+        desired_velocity = prophecy[0][2]
+
+        # print(
+        #     self.id,
+        #     "current velocity",
+        #     self.velocities[-1],
+        #     "desired",
+        #     desired_velocity,
+        #     "applied acceleration",
+        #     result_acceleration,
+        # )
+
+        return result_acceleration * 4
         # pre_data = pd.DataFrame(
         #     {
         #         # "l_follower": self.vehicle.length,
