@@ -2,6 +2,7 @@ import json
 from typing import Any
 
 from src.scene import Scene
+from pathlib import Path
 
 
 class SimulationRunner:
@@ -38,12 +39,13 @@ class SimulationRunner:
         )
         self.wasRan = True
 
-        success = self.results["collided"] is None
+        success = self.results["collided"] is False
         return success
 
     def did_collide(self) -> bool:
         assert self.wasRan == True, "run simulation first"
-        return self.results["collided"] is not None
+        print("collided is", self.results["collided"])
+        return self.results["collided"] is True
 
     def get_position_with_first(self):
         assert self.wasRan == True, "run simulation first"
@@ -60,10 +62,14 @@ class SimulationRunner:
             **self.results,
         }
 
-    def save_test(self, name: str):
-        self.flush_to_disk(f"./results/test_suite_{name}.json")
+    def get_result_value(self, name: str) -> float:
+        return self.results[name]
 
-    def flush_to_disk(self, file: str):
+    def flush_to_disk(self):
+        Path("./test_results").mkdir(parents=False, exist_ok=True)
+        self.flush_to_disk_to_file(f"./test_results/{self.scene.name}.json")
+
+    def flush_to_disk_to_file(self, file: str):
         print(f"writing simulation output to {file}")
 
         with open(f"{file}", "w") as fp:

@@ -11,7 +11,7 @@ def main():
     vehicle = Vehicle(length=1, max_acceleration=1, max_deceleration=1, max_velocity=50)
 
     scene = make_equadistent_scene(
-        dt=dt,
+        scene_name="example",
         # model_name="RandomAcceleration",
         # model_args={"spread": 0.1},
         model_name="ModelV1",
@@ -19,18 +19,16 @@ def main():
         vehicle=vehicle,
         road_length=200,
         vehicle_count=10,
-        initial_velocity=15,
+        initial_velocity=10,
         fuzzy_position=0.5,
         max_iterations=max_iterations,
     )
 
     runner = SimulationRunner(scene, True, True, True)
 
-    print("running...")
-
     runner.run()
 
-    runner.flush_to_disk("./results/test_run.json")
+    runner.flush_to_disk_to_file("./results/test_run.json")
 
 
 if __name__ == "__main__":

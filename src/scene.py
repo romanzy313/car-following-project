@@ -217,6 +217,7 @@ class Scene:
 
 
 def make_equadistent_scene(
+    scene_name: str,
     model_name: str,
     model_args,
     vehicle: Vehicle,
@@ -247,7 +248,7 @@ def make_equadistent_scene(
         model.inject_args(model_args)
         models.append(model)
 
-    return Scene(models, road_length, max_iterations)
+    return Scene(models, road_length, max_iterations, scene_name)
 
 
 def make_a_b_scene(

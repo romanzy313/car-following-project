@@ -1,5 +1,7 @@
 __pycache__
+.pytest_cache
 
 .DS_Store
 
 results/test_*.json
+test_results/*.json
