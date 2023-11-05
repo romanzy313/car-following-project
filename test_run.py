@@ -6,7 +6,7 @@ from src.vehicle import Vehicle
 
 def main():
     dt = 0.1
-    max_iterations = 3000
+    max_iterations = 2000
     # get_model_from_name("KeepDistanceModel")
     vehicle = Vehicle(length=1, max_acceleration=1, max_deceleration=1, max_velocity=50)
 
@@ -19,12 +19,14 @@ def main():
         vehicle=vehicle,
         road_length=200,
         vehicle_count=10,
-        initial_velocity=3,
-        fuzzy_position=1,
+        initial_velocity=15,
+        fuzzy_position=0.5,
         max_iterations=max_iterations,
     )
 
-    runner = SimulationRunner(scene=scene, dt=dt, max_iterations=max_iterations)
+    runner = SimulationRunner(scene, True, True, True)
+
+    print("running...")
 
     runner.run()
 

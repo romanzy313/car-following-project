@@ -49,7 +49,7 @@ def load_run_result(name: str):
         return data
 
 
-run_result = load_run_result("results/test_suite.json")
+run_result = load_run_result("results/test_run.json")
 road_length: float = run_result["scene"]["road_length"]
 steps = run_result["steps"]
 iteration_count: int = len(steps) - 1

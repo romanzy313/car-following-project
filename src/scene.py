@@ -1,11 +1,13 @@
 import math
 import random
+from time import sleep
 from models import RandomAcceleration
 from src.vehicle import Vehicle
 from src.model import Model, get_model_from_name
 from models import *
 from typing import Any, List
 from statistics import mean, median
+from tqdm import tqdm
 
 # 10 datapoints from the past are used for history (10 * 0.1 = 1 second of diving history)
 # ugly hardcoded values for now
@@ -44,7 +46,6 @@ class Scene:
 
     def to_json(self):
         def extract(model: Model):
-            data = model.to_json()
             return {
                 "id": model.id,
                 "name": model.name,
@@ -60,50 +61,37 @@ class Scene:
     def __str__(self):
         return f"total number of models {self.models}"
 
-    def run(self, with_steps: bool = True, with_metrics: bool = True):
+    def run(
+        self,
+        with_steps: bool = True,
+        with_statistics: bool = True,
+        display_progress: bool = False,
+    ):
         time = 0.0
-        iteration = 0
         collision: int | None = None
-        run = True
         steps: List[Any] = []
-        if with_metrics:
-            self.sample_metrics()
-        if with_steps:
-            steps.append(
-                {
-                    "iteration": iteration,
-                    "time": time,
-                    "vehicles": list(map(lambda model: model.to_json(), self.models)),
-                    # maybe lets append the statistics here?
-                }
-            )
+        iteration = 0
 
-        while run:
+        for iteration in tqdm(range(self.max_iterations), disable=not display_progress):
+            if with_statistics:
+                self.sample_metrics()
+            if with_steps:
+                steps.append(
+                    {
+                        "iteration": iteration,
+                        "time": time,
+                        "vehicles": list(
+                            map(lambda model: model.to_json(), self.models)
+                        ),
+                        # maybe lets append the statistics here?
+                    }
+                )
             time += self.dt
-            iteration += 1
             collision = self.tick()
-
             if collision is not None:
-                print(f"collision at iteration {iteration}")
-                run = False
-            elif iteration == self.max_iterations:
-                run = False
-            else:
-                if with_metrics:
-                    self.sample_metrics()
-                if with_steps:
-                    steps.append(
-                        {
-                            "iteration": iteration,
-                            "time": time,
-                            "vehicles": list(
-                                map(lambda model: model.to_json(), self.models)
-                            ),
-                            # maybe lets append the statistics here?
-                        }
-                    )
+                print("early collision exit")
+                break
 
-        # get collision type
         collided = collision is not None
         collision_follower_id = None
         collision_follower_model = None
@@ -131,7 +119,7 @@ class Scene:
 
         if with_steps:
             output["steps"] = steps
-        if with_metrics:
+        if with_statistics:
             output.update(self.collect_metrics())
 
         return output

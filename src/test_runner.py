@@ -19,12 +19,12 @@ class TestRunner:
         self,
         scene: Scene,
     ):
-        self.runners.append(SimulationRunner(scene))
+        self.runners.append(SimulationRunner(scene, True, False, True))
 
     def run_scene(self, runner: SimulationRunner, arr, index: int):
         name = runner.scene.name
         print("running scene", name)
-        success = runner.run(True, False)
+        success = runner.run()
         # self.results[runner.scene.name] = success
         print("finished running", name, "with outcome", success)
 
