@@ -65,33 +65,35 @@ class Model:
         return f"[{id}] position {self.positions[-1]} velocty {self.velocities[-1]}"
 
     def get_deltas_with_next(self, next: Model):
-        delta_positions: Any = list(
-            map(
-                operator.sub,
-                next.positions,
-                self.positions,
+        delta_positions = []
+
+        for i in range(len(self.positions)):
+            delta_positions.append(
+                next.positions[i]
+                - self.positions[i]
+                - next.vehicle.length / 2
+                - self.vehicle.length / 2
             )
-        )
         delta_velocities: Any = list(
             map(operator.sub, self.velocities, next.velocities)
         )
         # print("delta pos with next", delta_positions, "delta vel", delta_velocities)
 
-        # print(
-        #     "delta velocities",
-        #     delta_velocities,
-        #     "self",
-        #     self.velocities,
-        #     "next",
-        #     next.velocities,
-        # )
         return (delta_positions, delta_velocities)
 
     def get_deltas_on_last(self, first: Model, road_length: float):
         last = self
 
         inner_deltas_pos: Any = list(map(operator.sub, last.positions, first.positions))
-        delta_positions: Any = [*map(lambda x: road_length - x, inner_deltas_pos)]
+        delta_positions: Any = [
+            *map(
+                lambda x: road_length
+                - x
+                - self.vehicle.length / 2  # add vehicle length to it
+                - first.vehicle.length / 2,
+                inner_deltas_pos,
+            )
+        ]
         delta_velocities: Any = list(
             map(operator.sub, last.velocities, first.velocities)
         )

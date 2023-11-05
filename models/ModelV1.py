@@ -18,7 +18,7 @@ class Definition(Model):
         assert model_file, "data file not provided"
         self.model = Seq2SeqRuntime(model_file)
         self.name = f"ModelV1_{self.model_type}"
-        print(f"{self.name} loaded data_file {model_file}")
+        # print(f"{self.name} loaded data_file {model_file}")
 
     def tick(
         self,

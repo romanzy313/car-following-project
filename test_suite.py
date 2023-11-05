@@ -24,18 +24,6 @@ def make_linear_controller(
     return run
 
 
-# # callbacks, always give it 200 steps
-# def gradual_raise(iteration):
-#     if iteration <= 200:
-#         return 2  # Output is 2 for the first 100 iterations
-#     elif iteration <= 300:
-#         # Gradually increase output from 2 to 10 between iterations 100 and 200
-#         progress = (iteration - 100) / 100.0  # Progress from 0 to 1
-#         return 2 + progress * 8  # Linear interpolation from 2 to 10
-#     else:
-#         return 10  # Output is 10 after the 200th iteration
-
-
 def main():
     test_runner = TestRunner(False)
 
@@ -79,11 +67,11 @@ def main():
     # this will test the AI model
 
     ai_model = make_ai_model("1", 0, 10, "./src/model_scaler_cluster_1.pth")
-    ai_model2 = make_ai_model("1", 10, 10, "./src/model_scaler_cluster_1.pth")
+    ai_model2 = make_ai_model("2", 10, 10, "./src/model_scaler_cluster_1.pth")
 
     test_runner.add_scene(
         Scene(
-            name="first one",
+            name="rapid_breaking",
             models=[ai_model, ai_model2, remote_model],
             road_length=60,
             max_iterations=1000,
@@ -96,42 +84,18 @@ def main():
     # this will test the AI model
 
     ai_model3 = make_ai_model("1", 10, 10, "./src/model_scaler_cluster_1.pth")
-    ai_model4 = make_ai_model("1", 20, 11, "./src/model_scaler_cluster_1.pth")
+    ai_model4 = make_ai_model("2", 20, 11, "./src/model_scaler_cluster_1.pth")
 
     test_runner.add_scene(
         Scene(
-            name="second one",
+            name="random_bs",
             models=[ai_model3, ai_model4],
             road_length=40,
             max_iterations=2000,
         )
     )
 
-    # scene = make_equadistent_scene(
-    #     dt=dt,
-    #     # model_name="RandomAcceleration",
-    #     # model_args={"spread": 0.1},
-    #     model_name="ModelV1",
-    #     model_args={"model_type": "H", "data_file": "./src/model_scaler_cluster_0.pth"},
-    #     vehicle=vehicle,
-    #     road_length=200,
-    #     vehicle_count=10,
-    #     initial_velocity=3,
-    #     fuzzy_position=1,
-    #     max_iterations=max_iterations,
-    # )
-
-    print("running experiment speed up")
-
-    test_runner.run_all()
-
-    # runner = SimulationRunner(scene=scene, dt=dt, max_iterations=max_iterations)
-
-    # runner.run()
-
-    # print("starting to flush to disk...")
-
-    # runner.flush_to_disk("results/test_suite.json")
+    test_runner.run_all_parallel()
 
 
 if __name__ == "__main__":

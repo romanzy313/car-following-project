@@ -1,17 +1,18 @@
 from typing import Any, List
-import multiprocessing
+from multiprocessing import Process, Array
 from src.scene import Scene
-
+import glob
 from src.simulation_runner import SimulationRunner
+import os
 
 
 class TestRunner:
     runners: List[SimulationRunner]
-    results: dict
 
     def __init__(self, quick_fail: bool) -> None:
         self.quick_fail = quick_fail
         self.runners = []
+
         pass
 
     def add_scene(
@@ -20,57 +21,52 @@ class TestRunner:
     ):
         self.runners.append(SimulationRunner(scene))
 
-    def run_scene(self, runner: SimulationRunner, result_queue):
+    def run_scene(self, runner: SimulationRunner, arr, index: int):
         name = runner.scene.name
         print("running scene", name)
         success = runner.run(True, False)
         # self.results[runner.scene.name] = success
-        print("run result", runner.scene.name, success)
+        print("finished running", name, "with outcome", success)
 
         if not success:
             # write to disk
-            runner.flush_to_disk(f"./results/test_{runner.scene.name}.json")
+            runner.flush_to_disk(f"./results/test_suite_{runner.scene.name}.json")
 
-        result_queue.put((runner, success))
+        arr[index] = success
 
-        return 1
+    def run_all_parallel(self):
+        self.clear_previous_results()
 
-    def run_all(self):
-        result_queue = multiprocessing.Queue()
+        results = Array("b", range(len(self.runners)))
+
         processes = []
-        # use parallel
-
-        for runner in self.runners:
-            process = multiprocessing.Process(
+        for i, runner in enumerate(self.runners):
+            process = Process(
                 target=self.run_scene,
-                args=(runner, result_queue),
+                args=(
+                    runner,
+                    results,
+                    i,
+                ),
             )
             processes.append(process)
-            process.daemon = False
-            # process.run()
             process.start()
 
         for process in processes:
             process.join()
 
-        print("HERE")
+        print("all tests done")
+        results: List[bool] = results[:]  # type: ignore
 
-        # Collect results in the original order
-        results_dict = {}
-        while not result_queue.empty():
-            print("not empty")
-            runner, success = result_queue.get()
-            name = runner.scene.name
-            print("got scene", name, "outcome", success)
+        for i, result in enumerate(results):
+            text = "[success]" if result == 1 else "[fail]   "
+            print(f"{text}: {self.runners[i].scene.name}")
 
-            # if not success:
-            #     # write to disk
-            #     runner.flush_to_disk(f"test_{name}")
+    def clear_previous_results(self):
+        files = glob.glob("./results/test_suite*.json")
+        print("previous runs are", files)
 
-            results_dict[runner] = success
-
-        print("EMPTY")
-
-        # self.results = [results_dict[scene] for scene in self.runners]
-
-        # print("results are", self.results)
+        for file in files:
+            os.remove(file)
+        # delete all with prefix of ./results/test_suite_***.json
+        pass
