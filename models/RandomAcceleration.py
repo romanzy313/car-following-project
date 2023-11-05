@@ -12,12 +12,12 @@ class Definition(Model):
 
     def tick(
         self,
-        next_positions: List[float],
-        next_velocities: List[float],
-        next_accelerations: List[float],
+        follower_velocities: List[float],
+        delta_positions: List[float],
+        delta_velocities: List[float],
     ) -> float:
         """
         This sample model tries to keep the same position as the vehicle in the front
         """
 
-        return random.uniform(0, self.spread)
+        return random.uniform(-self.spread, self.spread)
