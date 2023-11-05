@@ -88,18 +88,6 @@ def make_many_ai_models(
     return results
 
 
-# need callbacks for this
-# slowdown_cb = make_linear_controller(10, 200, 250, 3)
-# def clear_previous_results(self):
-#     files = glob.glob("./results/test_suite*.json")
-#     print("previous runs are", files)
-
-#     for file in files:
-#         os.remove(file)
-#     # delete all with prefix of ./results/test_suite_***.json
-#     pass
-
-
 class TestDrive:
     # @pytest.mark.skip()
     @pytest.mark.parametrize("speed", [1, 5, 10, 15])
@@ -131,7 +119,7 @@ class TestDrive:
 
         runner = SimulationRunner(
             Scene(
-                name=f"constant_speed_{speed}",
+                name=f"single_vehicle_{speed}",
                 models=[ai_model],
                 road_length=100,
                 max_iterations=300,
