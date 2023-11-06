@@ -1,45 +1,90 @@
 import math
 import random
-from models import RandomAcceleration
+
+import numpy as np
 from src.vehicle import Vehicle
 from src.model import Model, get_model_from_name
-from models import *
 from typing import Any, List
 from statistics import mean, median
+from tqdm import tqdm
 
 # 10 datapoints from the past are used for history (10 * 0.1 = 1 second of diving history)
 # ugly hardcoded values for now
 history_length = 10
 
 
+class SceneStat:
+    total: float
+    count: int
+    max: float
+    min: float
+
+    def __init__(self) -> None:
+        self.total = 0
+        self.count = 0
+        self.max = -math.inf
+        self.min = math.inf
+        pass
+
+    def append(self, val: float):
+        if math.isfinite(val):
+            self.total += val
+            self.count += 1
+            if val > self.max:
+                self.max = val
+            elif val < self.min:
+                self.min = val
+
+    def collect(self, name: str):
+        if self.count == 0:
+            return {
+                f"{name}_mean": None,
+                f"{name}_max": None,
+                f"{name}_min": None,
+            }
+
+        return {
+            f"{name}_mean": round(self.total / self.count, 2),
+            f"{name}_max": round(self.max, 2),
+            f"{name}_min": round(self.min, 2),
+        }
+
+
 class Scene:
     # speed_limit: float
     models: List[Model]
-
-    # metrics variables
-    stat_velocity: List[float]
-    stat_ttc: List[float]  # time to collisions
 
     # TODO collect statistics on the run
     # Like how many near misses there are
 
     def __init__(
-        self, models: List[Model], road_length: float, dt: float, max_iterations: int
+        self,
+        models: List[Model],
+        road_length: float,
+        max_iterations: int,
+        name: str = "unnamed",
+        dt: float = 0.1,
     ) -> None:
+        self.name = name
         self.models = models
         self.road_length = road_length
         self.dt = dt
         self.max_iterations = max_iterations
-        self.stat_velocity = []
-        self.stat_ttc = []
+
+        self.stat_velocity = SceneStat()
+        self.stat_ttc = SceneStat()
+        self.stat_delta_pos = SceneStat()
 
         # self.dt = dt
         # pass
 
     def to_json(self):
         def extract(model: Model):
-            data = model.to_json()
-            return {"id": model.id, "name": model.name}
+            return {
+                "id": model.id,
+                "name": model.name,
+                "display": model.vehicle.display,
+            }
 
         return {
             "road_length": self.road_length,
@@ -50,42 +95,43 @@ class Scene:
     def __str__(self):
         return f"total number of models {self.models}"
 
-    def run(self, with_steps: bool):
+    def run(
+        self,
+        with_steps: bool = True,
+        with_statistics: bool = True,
+        display_progress: bool = False,
+    ):
         time = 0.0
-        iteration = 0
-        collision: int | bool = False
-        run = True
+        collision: int | None = None
         steps: List[Any] = []
-        while run:
-            collision = self.tick()
-            if collision:
-                # print(f"collision at iteration {iteration}")
-                run = False
-            elif iteration == self.max_iterations:
-                run = False
-            else:
+        iteration = 0
+
+        for iteration in tqdm(range(self.max_iterations), disable=not display_progress):
+            if with_statistics:
                 self.sample_metrics()
+            if with_steps:
                 steps.append(
                     {
                         "iteration": iteration,
-                        "time": time,
+                        "time": round(time, 1),
                         "vehicles": list(
                             map(lambda model: model.to_json(), self.models)
                         ),
                         # maybe lets append the statistics here?
                     }
                 )
-                time += self.dt
-                iteration += 1
+            time += self.dt
+            collision = self.tick()
+            if collision is not None:
+                break
 
-        # get collision type
-        collided = collision != False
+        collided = collision is not None
         collision_follower_id = None
         collision_follower_model = None
         collision_leader_id = None
         collision_leader_model = None
 
-        if collision:
+        if collision is not None:
             leader_index = collision if collision < len(self.models) - 1 else 0
 
             collision_follower_id = str(collision)
@@ -94,9 +140,9 @@ class Scene:
             collision_leader_model = self.models[leader_index].name
 
         output = {
-            "progress": iteration / self.max_iterations,
-            "end_time": time,
-            "end_iteration": iteration,
+            "progress": (iteration + 1) / self.max_iterations,
+            "end_time": round(time, 1),
+            "end_iteration": iteration + 1,
             "collided": collided,
             "collision_follower_id": collision_follower_id,
             "collision_follower_model": collision_follower_model,
@@ -106,8 +152,8 @@ class Scene:
 
         if with_steps:
             output["steps"] = steps
-
-        output.update(self.collect_metrics())
+        if with_statistics:
+            output.update(self.collect_metrics())
 
         return output
         # return run results
@@ -128,15 +174,12 @@ class Scene:
         for i in range(0, len(self.models)):
             self.models[i].apply_acceleration(accelerations[i])
 
-        # collect metrics here
-
-        # step 4, being lazy for now
         collisionId = self.check_collisions()
 
         return collisionId
 
-    def check_collisions(self) -> int | bool:
-        for i in range(0, len(self.models) - 2):
+    def check_collisions(self) -> int | None:
+        for i in range(0, len(self.models) - 1):
             collided = self.models[i].check_collision_with_next(self.models[i + 1])
             if collided:
                 return i
@@ -147,49 +190,50 @@ class Scene:
         if collided:
             return len(self.models) - 1
 
-        return False
+        return None
 
     def sample_metrics(self):
         # metrics such as average velocity and average time to collision
         # just add all of them
+        def add_ttc(delta_positions, delta_velocities):
+            if delta_velocities[-1] != 0:
+                ttc = delta_positions[-1] / delta_velocities[-1]
+                self.stat_ttc.append(ttc)
 
         for model in self.models:
             self.stat_velocity.append(model.velocities[-1])
 
         # compute ttc here...
 
-        for i in range(0, len(self.models) - 1):
+        for i in range(len(self.models) - 1):
             (delta_positions, delta_velocities) = self.models[i].get_deltas_with_next(
                 self.models[i + 1]
             )
+            add_ttc(delta_positions, delta_velocities)
+            self.stat_delta_pos.append(delta_positions[-1])
             # print("deltas", delta_positions, delta_velocities)
-            if delta_velocities[-1] != 0:
-                ttc = delta_positions[-1] / delta_velocities[-1]
-                # need to account for inifinite values, for now just drop it
-                if math.isfinite(ttc):
-                    self.stat_ttc.append(ttc)
 
         (delta_positions, delta_velocities) = self.models[-1].get_deltas_on_last(
             self.models[0], self.road_length
         )
-        if delta_velocities[-1] != 0:
-            ttc = delta_positions[-1] / delta_velocities[-1]
-            # need to account for inifinite values, just drop it
-            if math.isfinite(ttc):
-                self.stat_ttc.append(ttc)
+        add_ttc(delta_positions, delta_velocities)
+        self.stat_delta_pos.append(delta_positions[-1])
 
     def collect_metrics(self):
-        # print("stat_ttc", self.stat_ttc)
-
         return {
-            "mean_velocities": mean(self.stat_velocity),
-            "median_velocities": median(self.stat_velocity),
-            "mean_ttc": None if len(self.stat_ttc) == 0 else mean(self.stat_ttc),
-            "median_ttc": None if len(self.stat_ttc) == 0 else median(self.stat_ttc),
+            **self.stat_velocity.collect("velocity"),
+            **self.stat_ttc.collect("ttc"),
+            **self.stat_delta_pos.collect(
+                "delta_pos",
+            ),
         }
+
+    def get_model_positions(self):
+        return list(map(lambda x: x.positions[-1], self.models))
 
 
 def make_equadistent_scene(
+    scene_name: str,
     model_name: str,
     model_args,
     vehicle: Vehicle,
@@ -218,10 +262,9 @@ def make_equadistent_scene(
             inital_velocity=initial_velocity + random.uniform(-0.1, 0.1),
         )
         model.inject_args(model_args)
-
         models.append(model)
 
-    return Scene(models, road_length, dt, max_iterations)
+    return Scene(models, road_length, max_iterations, scene_name)
 
 
 def make_a_b_scene(
@@ -273,4 +316,4 @@ def make_a_b_scene(
 
         models.append(model)
 
-    return Scene(models, road_length, dt, max_iterations)
+    return Scene(models, road_length, max_iterations)
