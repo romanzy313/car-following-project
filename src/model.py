@@ -57,8 +57,8 @@ class Model:
     def to_json(self):
         return {
             "id": self.id,
-            "position": self.positions[-1],
-            "velocity": self.velocities[-1],
+            "position": round(self.positions[-1], 2),
+            "velocity": round(self.velocities[-1], 2),
         }
 
     def __str__(self):

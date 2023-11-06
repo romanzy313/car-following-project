@@ -83,7 +83,7 @@ class AggregateSimulationRunner:
             "scenario_id": scenario_id,
             "model_a": self.model_a_name,
             "model_b": self.model_b_name,
-            "sweep_amount": sweep_amount,
+            "sweep_amount": round(sweep_amount, 2),
         }
 
         # run-it
@@ -101,13 +101,15 @@ class AggregateSimulationRunner:
         # give them total count
         desired_runs = []
         total_count = (round(1 / self.sweep_step) + 1) * self.scenario_iterations
-        print("total count is", total_count)
+        # print("total count is", total_count)
 
         for sweep_amount in xfrange(0, 1, self.sweep_step):
             scenario_id += 1
             for _ in range(0, self.scenario_iterations):
                 run_id += 1
-                desired_runs.append((sweep_amount, scenario_id, run_id, total_count))
+                desired_runs.append(
+                    (round(sweep_amount, 2), scenario_id, run_id, total_count)
+                )
 
         # first build up an array of values that must be run
         # then somehow
