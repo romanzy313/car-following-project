@@ -86,10 +86,36 @@ PCA_COMPONENTS = 2
 
 
 def preprocess_features(features):
-    """Normalize the features of a dataframe."""
+    # Replace inf/-inf with NaN
+    features = features.replace([np.inf, -np.inf], np.nan)
+
+    # Check for any remaining infinite values
+    if np.isinf(features.values).any():
+        raise ValueError(
+            "Input contains infinity or a value too large for dtype('float64')."
+        )
+
+    # Option 1: Drop rows with NaN values
+    # features = features.dropna()
+
+    # Option 2: Fill NaN values with the mean of the column
+    features = features.fillna(features.mean())
+
+    # Ensure all data is numeric
+    features = features.apply(pd.to_numeric, errors="coerce")
+
+    # Check for any NaN values created by to_numeric conversion
+    if features.isnull().values.any():
+        raise ValueError("NaN values were introduced by to_numeric conversion.")
+
+    # Drop any rows that still have NaN values (if any)
+    features = features.dropna()
+
+    # Standardize features by removing the mean and scaling to unit variance
     scaler = StandardScaler()
-    features_numeric = features.select_dtypes(include=np.number).dropna()
+    features_numeric = features.select_dtypes(include=[np.number])
     normalized_data = scaler.fit_transform(features_numeric)
+
     return normalized_data, features_numeric
 
 
@@ -171,7 +197,6 @@ def get_clustered_df(features):
     # Load and preprocess the data
 
     normalized_data, features_numeric = preprocess_features(features)
-
     # Optionally apply PCA
     pca_data = apply_dimensionality_reduction(normalized_data)
 
@@ -234,7 +259,6 @@ def cluster_and_save(dataset: str):
     for cluster_value, group_df in grouped:
         # Drop the 'cluster' column
         group_df = group_df.drop(columns=["cluster"])
-
         # Define the filename for the CSV file
         file_name = f"{out_dir}/{dataset}_{str(cluster_value)[0]}.zarr"  # type: ignore
         print("saving cluster result to", file_name)
@@ -249,3 +273,6 @@ save_AH_without_clustering()
 datasets = ["HA", "HH"]
 for dataset in datasets:
     cluster_and_save(dataset)
+
+
+# %%
