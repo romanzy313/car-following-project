@@ -13,14 +13,46 @@ from tqdm import tqdm
 history_length = 10
 
 
+class SceneStat:
+    total: float
+    count: int
+    max: float
+    min: float
+
+    def __init__(self) -> None:
+        self.total = 0
+        self.count = 0
+        self.max = -math.inf
+        self.min = math.inf
+        pass
+
+    def append(self, val: float):
+        if math.isfinite(val):
+            self.total += val
+            self.count += 1
+            if val > self.max:
+                self.max = val
+            elif val < self.min:
+                self.min = val
+
+    def collect(self, name: str):
+        if self.count == 0:
+            return {
+                f"{name}_mean": None,
+                f"{name}_max": None,
+                f"{name}_min": None,
+            }
+
+        return {
+            f"{name}_mean": round(self.total / self.count, 2),
+            f"{name}_max": round(self.max, 2),
+            f"{name}_min": round(self.min, 2),
+        }
+
+
 class Scene:
     # speed_limit: float
     models: List[Model]
-
-    # metrics variables
-    stat_velocity: List[float]
-    stat_ttc: List[float]  # time to collisions
-    stat_delta_pos: List[float]
 
     # TODO collect statistics on the run
     # Like how many near misses there are
@@ -38,9 +70,10 @@ class Scene:
         self.road_length = road_length
         self.dt = dt
         self.max_iterations = max_iterations
-        self.stat_velocity = []
-        self.stat_ttc = []
-        self.stat_delta_pos = []
+
+        self.stat_velocity = SceneStat()
+        self.stat_ttc = SceneStat()
+        self.stat_delta_pos = SceneStat()
 
         # self.dt = dt
         # pass
@@ -80,7 +113,7 @@ class Scene:
                 steps.append(
                     {
                         "iteration": iteration,
-                        "time": time,
+                        "time": round(time, 1),
                         "vehicles": list(
                             map(lambda model: model.to_json(), self.models)
                         ),
@@ -107,9 +140,9 @@ class Scene:
             collision_leader_model = self.models[leader_index].name
 
         output = {
-            "progress": iteration / self.max_iterations,
-            "end_time": time,
-            "end_iteration": iteration,
+            "progress": (iteration + 1) / self.max_iterations,
+            "end_time": round(time, 1),
+            "end_iteration": iteration + 1,
             "collided": collided,
             "collision_follower_id": collision_follower_id,
             "collision_follower_model": collision_follower_model,
@@ -165,9 +198,7 @@ class Scene:
         def add_ttc(delta_positions, delta_velocities):
             if delta_velocities[-1] != 0:
                 ttc = delta_positions[-1] / delta_velocities[-1]
-                # need to account for inifinite values, for now just drop it
-                if math.isfinite(ttc):
-                    self.stat_ttc.append(ttc)
+                self.stat_ttc.append(ttc)
 
         for model in self.models:
             self.stat_velocity.append(model.velocities[-1])
@@ -189,27 +220,12 @@ class Scene:
         self.stat_delta_pos.append(delta_positions[-1])
 
     def collect_metrics(self):
-        def allStats(name: str, array: List[float]):
-            if len(array) == 0:
-                return {
-                    f"{name}_mean": None,
-                    f"{name}_median": None,
-                    f"{name}_max": None,
-                    f"{name}_min": None,
-                }
-
-            vals = np.array(array)
-            return {
-                f"{name}_mean": np.mean(vals),
-                f"{name}_median": np.median(vals),
-                f"{name}_max": np.max(vals),
-                f"{name}_min": np.min(vals),
-            }
-
         return {
-            **allStats("velocity", self.stat_velocity),
-            **allStats("ttc", self.stat_ttc),
-            **allStats("delta_pos", self.stat_delta_pos),
+            **self.stat_velocity.collect("velocity"),
+            **self.stat_ttc.collect("ttc"),
+            **self.stat_delta_pos.collect(
+                "delta_pos",
+            ),
         }
 
     def get_model_positions(self):

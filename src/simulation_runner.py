@@ -65,9 +65,12 @@ class SimulationRunner:
     def get_result_value(self, name: str) -> float:
         return self.results[name]
 
-    def flush_to_disk(self):
+    def flush_to_disk(self, mark_failed=False):
         Path("./test_results").mkdir(parents=False, exist_ok=True)
-        self.flush_to_disk_to_file(f"./test_results/{self.scene.name}.json")
+        failed_extra = "_failed" if mark_failed and self.did_collide() else ""
+        self.flush_to_disk_to_file(
+            f"./test_results/{self.scene.name}{failed_extra}.json"
+        )
 
     def flush_to_disk_to_file(self, file: str):
         print(f"writing simulation output to {file}")
