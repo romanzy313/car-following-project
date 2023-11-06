@@ -165,9 +165,11 @@ def run_training(
     """
     Autodevice will try to use cuda if possible, otherwise uses what is specified
     """
+    # print("device specified", device)
     device = (
-        ("CUDA" if torch.cuda.is_available() else "cpu") if device == "auto" else device
+        ("cuda" if torch.cuda.is_available() else "cpu") if device == "auto" else device
     )
+    tqdm.write(f"[{dataset}_{cluster_idx}] using device {device}")
     # for j in tqdm(range(10), desc="j", colour='red'):
     # time.sleep(0.5)
     # for cluster, cluster_df in clustered_dataframes.items():
@@ -199,7 +201,7 @@ def run_training(
 
     model = Seq2Seq(
         input_size=X_train_tensor.shape[2],
-        hidden_size=50,
+        hidden_size=128,
         output_size=y_train_tensor.shape[2],
         n_steps_out=n_steps_out,
     )
@@ -250,6 +252,8 @@ def find_all_clusters():
 
 def train_cluster(dataset: str, cluster_idx: int, file: str):
     train_data = read_clustered_data(file)
+    tqdm.write(f"[{dataset}_{cluster_idx}] Dataset size {train_data.shape}")
+    
     # train_data = train_data.sample(frac=0.01, random_state=1)
     run_training(
         cluster_df=train_data,

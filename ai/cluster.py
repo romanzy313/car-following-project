@@ -121,11 +121,11 @@ def plot_clusters(features, labels, pca_data=None):
             features.iloc[:, 2],
             c=labels,
             cmap="viridis",
-            s=50,
+            s=50, # type: ignore
         )
         ax.set_xlabel("Feature 1")
         ax.set_ylabel("Feature 2")
-        ax.set_zlabel("Feature 3")
+        ax.set_zlabel("Feature 3") # type: ignore
         ax.set_title("K-Means Clustering Results")
     plt.show()
 
