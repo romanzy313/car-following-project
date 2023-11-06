@@ -36,6 +36,8 @@ nbformat = "*"
 [dev-packages]
 black = "*"
 ipykernel = "*"
+pytest = "*"
+pytest-xdist = "*"
 
 [requires]
 python_version = "3.11"

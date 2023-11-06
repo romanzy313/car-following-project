@@ -1,5 +1,17 @@
 # Difference in car-following interaction between following a human-driven vehicle and an autonomous vehicle project
 
+## Run tests
+
+`pytest -n 2 tests.py`
+
+### only a subset of tests
+
+`pytest -n 2 -k manual ./tests.py`
+
+## Visualize output
+
+`python visualization.py -f ./test_results/deceleration_10_4_in_3.json`
+
 Project description
 
 # Run example simulation

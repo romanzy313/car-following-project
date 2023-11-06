@@ -1,7 +1,11 @@
+from functools import partial
 import json
+from typing import List
+
 
 from src.scene import Scene, make_a_b_scene
 from src.vehicle import Vehicle
+from multiprocessing import Pool, cpu_count
 
 
 def xfrange(start, stop, step):
@@ -52,7 +56,12 @@ class AggregateSimulationRunner:
 
         self.results = []
 
-    def single_run(self, sweep_amount: float, scenario_id: int, run_id: int):
+    def single_run(
+        self, sweep_amount: float, scenario_id: int, run_id: int, total_count: int
+    ):
+        print(
+            f"[{run_id}/{total_count}] scenario {scenario_id} with sweep {sweep_amount}"
+        )
         # Make a scene
         scene = make_a_b_scene(
             model_a_name=self.model_a_name,
@@ -78,24 +87,40 @@ class AggregateSimulationRunner:
         }
 
         # run-it
-        run_res = scene.run(with_steps=False)
+        run_res = scene.run(
+            with_steps=False, with_statistics=True, display_progress=False
+        )
+
+        # print(f"[{run_id}] COMPLETED scenario {scenario_id} with sweep {sweep_amount}")
 
         return {**results, **run_res}
 
-    def run_all(self):
+    def run_all(self, pool_size: int = cpu_count()):
         run_id = 0
         scenario_id = 0
+        # give them total count
+        desired_runs = []
+        total_count = (round(1 / self.sweep_step) + 1) * self.scenario_iterations
+        print("total count is", total_count)
 
         for sweep_amount in xfrange(0, 1, self.sweep_step):
             scenario_id += 1
-            print(f"running scenario {scenario_id}")
-            for rerun in range(0, self.scenario_iterations):
+            for _ in range(0, self.scenario_iterations):
                 run_id += 1
-                result = self.single_run(sweep_amount, scenario_id, run_id)
-                self.results.append(result)
+                desired_runs.append((sweep_amount, scenario_id, run_id, total_count))
 
-        # run it many times and save each run individually
-        # keep output data flat for easy analysis
+        # first build up an array of values that must be run
+        # then somehow
+        # now make it use the pool
+
+        proc_pool = Pool(pool_size)
+
+        self.results = proc_pool.starmap(self.single_run, desired_runs)
+
+        proc_pool.close()
+        proc_pool.join()
+
+        print("aggregate runner finished")
 
         pass
 

@@ -11,6 +11,7 @@ road_width = 40
 road_color = (255, 255, 255)
 
 car_image = pygame.image.load("assets/car_1.png")
+truck_image = pygame.image.load("assets/car-truck5.png")
 
 car_image_rect = car_image.get_rect()
 
@@ -23,3 +24,7 @@ iteration_rect = (620 + 10, 50 + 20)
 outcome_rect = (620 + 10, 50 + 20 + 20)
 
 progress_rect = (0, 620 + 10, 920, 30)
+
+
+history_length = 10
+dt = 0.1
