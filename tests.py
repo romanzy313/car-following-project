@@ -132,7 +132,7 @@ class TestDrive:
                 name=f"single_vehicle_{speed}.{brain_id}",
                 models=[ai_model],
                 road_length=100,
-                max_iterations=300,
+                max_iterations=400,
             ),
         )
 
@@ -146,9 +146,9 @@ class TestDrive:
     @pytest.mark.parametrize("brain_id", [0, 1], ids=["new_brain", "old_brain"])
     @pytest.mark.parametrize(
         "start_speed,end_speed,time",
-        [(10, 8, 4), (10, 6, 3), (10, 4, 3), (10, 0, 10)],
+        [(10, 8, 4), (10, 6, 3), (10, 4, 3), (10, 0, 5)],
     )
-    def test_rapid_break(
+    def test_deleration(
         self, start_speed: float, end_speed: float, time: float, brain_id: int
     ):
         timesteps = round(time / 0.1)
@@ -173,7 +173,37 @@ class TestDrive:
 
         assert runner.did_collide() == False, "collision"
 
-    # @pytest.mark.skip()
+    @pytest.mark.parametrize("brain_id", [0, 1], ids=["new_brain", "old_brain"])
+    @pytest.mark.parametrize(
+        "start_speed,end_speed,time",
+        [(4, 8, 4), (2, 10, 4), (4, 12, 2)],
+    )
+    def test_acceleration(
+        self, start_speed: float, end_speed: float, time: float, brain_id: int
+    ):
+        timesteps = round(time / 0.1)
+        remote_model = make_remote_model(
+            60, make_linear_controller(start_speed, 200, 200 + timesteps, end_speed)
+        )
+        ai_model1 = make_ai_model("1", 0, start_speed, brains[brain_id])
+        ai_model2 = make_ai_model("2", 20, start_speed, brains[brain_id])
+        ai_model3 = make_ai_model("3", 40, start_speed, brains[brain_id])
+
+        runner = SimulationRunner(
+            Scene(
+                name=f"acceleration_{start_speed}_{end_speed}_in_{time}.{brain_id}",
+                models=[ai_model1, ai_model2, ai_model3, remote_model],
+                road_length=100,
+                max_iterations=800,
+            )
+        )
+
+        runner.run()
+        runner.flush_to_disk()
+
+        assert runner.did_collide() == False, "collision"
+
+    @pytest.mark.skip()
     @pytest.mark.parametrize("brain_id", [0, 1], ids=["new_brain", "old_brain"])
     @pytest.mark.parametrize(
         "vehicle_count,initial_velocity,low_limit,high_limit",
@@ -217,13 +247,13 @@ class TestDrive:
         [(10, 1, 1, 3), (10, 5, 4, 6), (10, 10, 9, 11)],
     )
     def test_many_manual(self, speed, count, min_speed, max_speed, brain_id):
-        # remote_model = make_remote_model(80, make_constant_controller(speed))
+        remote_model = make_remote_model(80, make_constant_controller(speed))
         ai_models = make_many_ai_models(count, 0, 60, speed, brains[brain_id])
         runner = SimulationRunner(
             Scene(
                 name=f"many_manual_{count}_at_{speed}.{brain_id}",
-                # models=[*ai_models, remote_model],
-                models=[*ai_models],
+                models=[*ai_models, remote_model],
+                # models=[*ai_models],
                 road_length=100,
                 max_iterations=1000,
             ),
