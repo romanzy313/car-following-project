@@ -3,16 +3,35 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 name = "pypi"
 
+[[source]]
+url = "https://download.pytorch.org/whl/"
+verify_ssl = true
+name = "downloadpytorch"
+
+[[source]]
+url = "https://download.pytorch.org/whl/"
+verify_ssl = true
+name = "downloadpytorch"
+
+[[source]]
+url = "https://download.pytorch.org/whl/"
+verify_ssl = true
+name = "downloadpytorch"
+
 [packages]
 numpy = "*"
 matplotlib = "*"
 pygame = "*"
 zarr = "*"
 pandas = "*"
-torch = "*"
 tqdm = "*"
 scikit-learn = "*"
 pygame-gui = "*"
+torch = {version = "==2.0.1", index = "downloadpytorch"}
+torchvision = {version = "==0.15.2", index = "downloadpytorch"}
+torchaudio = {version = "==2.0.2", index = "downloadpytorch"}
+nbimporter = "*"
+nbformat = "*"
 
 [dev-packages]
 black = "*"
@@ -21,4 +40,4 @@ pytest = "*"
 pytest-xdist = "*"
 
 [requires]
-python_version = "3.10"
+python_version = "3.11"
