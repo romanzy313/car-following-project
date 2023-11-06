@@ -16,16 +16,16 @@ def main():
             "data_file": "./src/model_scaler_cluster_0.pth",
         },
         initial_velocity=5,
-        max_iterations_per_run=5000,
+        max_iterations_per_run=1000,
         road_length=80,
         vehicle_count=5,
         scenario_iterations=1,
         sweep_step=0.1,
     )
 
-    runner.run_all()
+    runner.run_all(pool_size=2)
 
-    runner.flush_to_disk("results/test_aggregate.json")
+    runner.flush_to_disk("results/test_aggregate_2.json")
 
 
 if __name__ == "__main__":
