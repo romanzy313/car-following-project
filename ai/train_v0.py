@@ -94,7 +94,7 @@ def evaluate_model(
 
     # Calculate metrics
     mse = mean_squared_error(y_test_original[:, 0, :], y_pred_original[:, 0, :])
-    rmse = math.sqrt(mse)
+    rmse = math.sqrt(mse) # type: ignore
     mae = mean_absolute_error(y_test_original[:, 0, :], y_pred_original[:, 0, :])
 
     tqdm.write(
@@ -147,7 +147,7 @@ def train_model(
 
         if epoch % 10 == 0:
             tqdm.write(
-                f"[{dataset}_{cluster_idx}] Epoch: {epoch} Loss: {loss.item() * accumulation_steps:.4f}"
+                f"[{dataset}_{cluster_idx}] Epoch: {epoch} Loss: {loss.item() * accumulation_steps:.4f}" # type: ignore
             )  # Adjust the loss value
 
 
@@ -248,60 +248,20 @@ def find_all_clusters():
     # extract names from it too
     # for i in tqdm(datasets, position=0, leave=False, desc="i", colour="green"):
 
-
-# def predict_delta_velocity(eval_df, mode_name, n_steps_in=30, delta_velocity_index=1):
-#     """
-#     Safety-Critical Applications: If the prediction is used for real-time safety systems
-#     (like advanced driver-assistance systems, ADAS), the most recent predictions may be the most
-#      valuable as they can inform immediate safety interventions.
-
-#     Driver Profiling or Long-Term Trends: If the goal is to understand long-term driver behavior
-#      for insurance purposes or driver coaching, then averaging or aggregating over a range of predictions
-#       to get a more stable and generalized profile might be more appropriate.
-
-
-#     """
-#     # Preprocess the data
-#     X_new_tensor = preprocess_data_for_inference(eval_df)
-#     print(f"X_new_tensor", X_new_tensor.shape)
-#     # Initialize the model based on the shape of the input data
-#     model = Seq2Seq(
-#         input_size=X_new_tensor.shape[2],
-#         hidden_size=128,
-#         n_steps_out=10,
-#         output_size=X_new_tensor.shape[2],
-#     )
-
-#     # Load the checkpoint
-#     checkpoint = torch.load(mode_name)
-
-#     # Extract the scaler from the checkpoint
-#     scaler = checkpoint["scaler"]
-#     # Load model's state dictionary from the checkpoint
-#     model.load_state_dict(checkpoint["model_state_dict"])
-
-#     # Predict using the model
-#     model.eval()
-#     with torch.no_grad():
-#         y_new_pred_tensor = model(X_new_tensor)
-#         y_new_pred = y_new_pred_tensor.numpy()
-#     # print(f"y_new_pred_tensor",y_test_tensor.shape)
-#     print(y_new_pred.shape)
-
-#     # Take the first prediction from the first sequence
-#     y_first_pred = y_new_pred[0, :, :]
-#     # print(f"first predict", y_first_pred.shape)
-#     # print(y_first_pred)
-#     # Inverse transform the predictions to the original scale
-
-#     y_first_pred_original = scaler.inverse_transform(y_first_pred)
-
-#     # Extract the denormalized delta_velocity values
-#     delta_velocity_pred_original = y_first_pred_original[:, delta_velocity_index]
-
-#     # Return the predicted delta velocity
-#     return delta_velocity_pred_original
-
+def train_cluster(dataset: str, cluster_idx: int, file: str):
+    train_data = read_clustered_data(file)
+    # train_data = train_data.sample(frac=0.01, random_state=1)
+    run_training(
+        cluster_df=train_data,
+        dataset=dataset,
+        cluster_idx=cluster_idx,
+        n_steps_in=n_steps_in,
+        n_steps_out=n_steps_out,
+        epochs=epochs,
+        lr=lr,
+        device=device,
+        num_workers=num_workers,
+    )
 
 # Global settings are here
 cluster_dir = "../out_cluster"
@@ -321,16 +281,4 @@ if __name__ == "__main__":
         dataset = v["dataset"]
         cluster_idx = v["cluster"]
         file = v["file"]
-        train_data = read_clustered_data(file)
-        # train_data = train_data.sample(frac=0.01, random_state=1)
-        models_scalers = run_training(
-            cluster_df=train_data,
-            dataset=dataset,
-            cluster_idx=cluster_idx,
-            n_steps_in=n_steps_in,
-            n_steps_out=n_steps_out,
-            epochs=epochs,
-            lr=lr,
-            device=device,
-            num_workers=num_workers,
-        )
+        train_cluster(dataset, cluster_idx, file)
