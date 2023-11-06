@@ -68,7 +68,6 @@ outcome: str = "collision" if run_result["collided"] == True else "no collision"
 
 model_dict = {item["id"]: item for item in run_result["scene"]["models"]}
 
-print("model dictionary", model_dict)
 
 iteration: int = 0
 
@@ -118,7 +117,6 @@ def toggle_playing():
     global playing
     playing = not playing
     start_stop_button.set_text("Stop" if playing else "Start")
-    print("playing is", playing)
 
 
 start_stop_button = pygame_gui.elements.UIButton(
