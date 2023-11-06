@@ -1,5 +1,6 @@
 # %%
 import numpy as np
+import pandas as pd
 from read_data import read_data
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
@@ -191,6 +192,23 @@ def get_clustered_df(features):
     return features_numeric
 
 
+def train_df(dataset: str, clustered_data: pd.DataFrame, mode: str):
+    """
+    Returns a DataFrame with delta position, delta velocity, v_follower and cluster.
+    """
+    data = read_data(dataset, mode)
+    data["delta_position"] = data["x_leader"] - data["x_follower"]
+    data["delta_velocity"] = data["v_follower"] - data["v_leader"]
+
+    # Merge the data with clustered_data on 'case_id' to get the 'cluster' column
+    data = pd.merge(
+        data, clustered_data[["case_id", "cluster"]], on="case_id", how="left"
+    )
+    data = data[["delta_position", "delta_velocity", "v_follower", "cluster"]]
+    # print(data.head())
+    return data
+
+
 out_dir = "../out_cluster"
 
 
@@ -209,10 +227,8 @@ def cluster_and_save(dataset: str):
     print("clustering dataset", dataset)
     AH_data = convert_df(dataset, "train")
     clustered_data = get_clustered_df(AH_data)
+    runtime_data = train_df(dataset, clustered_data, "train")
 
-    runtime_data = clustered_data[
-        ["delta_velocity", "delta_position", "v_follower", "cluster"]
-    ]
     grouped = runtime_data.groupby("cluster")
 
     for cluster_value, group_df in grouped:
@@ -220,7 +236,7 @@ def cluster_and_save(dataset: str):
         group_df = group_df.drop(columns=["cluster"])
 
         # Define the filename for the CSV file
-        file_name = f"{out_dir}/{dataset}_{cluster_value}.zarr"
+        file_name = f"{out_dir}/{dataset}_{str(cluster_value)[0]}.zarr"  # type: ignore
         print("saving cluster result to", file_name)
         # print(group_df)
         zarr.save(file_name, group_df)
