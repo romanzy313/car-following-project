@@ -5,6 +5,8 @@ import numpy as np
 from sklearn.preprocessing import StandardScaler
 import torch.nn as nn
 
+import warnings
+
 
 # Define the Encoder
 class Encoder(nn.Module):
@@ -52,14 +54,22 @@ class Seq2Seq(nn.Module):
 class Seq2SeqRuntime:
     def __init__(self, name: str):
         # Load the checkpoint
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                action="ignore",
+                # category=DeprecationWarning,
+                module=r".*sklearn",
+            )
 
-        device = (
-            torch.device("CUDA") if torch.cuda.is_available() else torch.device("cpu")
-        )
+            device = (
+                torch.device("CUDA")
+                if torch.cuda.is_available()
+                else torch.device("cpu")
+            )
 
-        self.checkpoint = torch.load(name, map_location=torch.device(device))
-        # Extract the scaler from the checkpoint
-        self.scaler = self.checkpoint["scaler"]
+            self.checkpoint = torch.load(name, map_location=torch.device(device))
+            # Extract the scaler from the checkpoint
+            self.scaler = self.checkpoint["scaler"]
 
     def preprocess_data_for_inference(self, df, n_steps_in, n_steps_out):
         # Normalize the data

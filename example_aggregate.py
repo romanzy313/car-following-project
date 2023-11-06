@@ -19,7 +19,7 @@ def main():
         max_iterations_per_run=1000,
         road_length=80,
         vehicle_count=5,
-        scenario_iterations=10,
+        scenario_iterations=1,
         sweep_step=0.1,
     )
 

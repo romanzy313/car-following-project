@@ -98,7 +98,7 @@ brains = [
 
 class TestDrive:
     # @pytest.mark.skip()
-    @pytest.mark.parametrize("brain_id", [0, 1])
+    @pytest.mark.parametrize("brain_id", [0, 1], ids=["new_brain", "old_brain"])
     @pytest.mark.parametrize("speed", [1, 5, 10, 15])
     def test_constant_speed(self, speed, brain_id):
         # check that car can drive straight without colliding
@@ -120,7 +120,7 @@ class TestDrive:
 
         assert runner.did_collide() == False, "collision"
 
-    @pytest.mark.parametrize("brain_id", [0, 1])
+    @pytest.mark.parametrize("brain_id", [0, 1], ids=["new_brain", "old_brain"])
     @pytest.mark.parametrize("speed,min_speed,max_speed", [(1, 0.5, 1.5), (10, 9, 11)])
     def test_single_keep_speed(self, speed, min_speed, max_speed, brain_id):
         # check that car can drive straight without colliding
@@ -143,10 +143,10 @@ class TestDrive:
         assert final_vel < max_speed, f"too fast {final_vel}"
 
     # @pytest.mark.skip()
-    @pytest.mark.parametrize("brain_id", [0, 1])
+    @pytest.mark.parametrize("brain_id", [0, 1], ids=["new_brain", "old_brain"])
     @pytest.mark.parametrize(
         "start_speed,end_speed,time",
-        [(10, 8, 4.0), (10, 6, 3.0), (10, 4, 3), (10, 0, 10)],
+        [(10, 8, 4), (10, 6, 3), (10, 4, 3), (10, 0, 10)],
     )
     def test_rapid_break(
         self, start_speed: float, end_speed: float, time: float, brain_id: int
@@ -174,7 +174,7 @@ class TestDrive:
         assert runner.did_collide() == False, "collision"
 
     # @pytest.mark.skip()
-    @pytest.mark.parametrize("brain_id", [0, 1])
+    @pytest.mark.parametrize("brain_id", [0, 1], ids=["new_brain", "old_brain"])
     @pytest.mark.parametrize(
         "vehicle_count,initial_velocity,low_limit,high_limit",
         [(10, 2, 1, 3), (10, 5, 4, 6), (10, 10, 9, 11)],
@@ -211,7 +211,7 @@ class TestDrive:
         assert avg_vel < high_limit, f"too fast {avg_vel}"
 
     # this one keeps on failing
-    @pytest.mark.parametrize("brain_id", [0, 1])
+    @pytest.mark.parametrize("brain_id", [0, 1], ids=["new_brain", "old_brain"])
     @pytest.mark.parametrize(
         "speed,count,min_speed,max_speed",
         [(10, 1, 1, 3), (10, 5, 4, 6), (10, 10, 9, 11)],
