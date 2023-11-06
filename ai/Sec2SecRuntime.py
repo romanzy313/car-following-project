@@ -118,7 +118,7 @@ class Seq2SeqRuntime:
         # Initialize the model based on the shape of the input data
         model = Seq2Seq(
             input_size=X_new_tensor.shape[2],
-            hidden_size=50,
+            hidden_size=128,
             n_steps_out=10,
             output_size=X_new_tensor.shape[2],
         )

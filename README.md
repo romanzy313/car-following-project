@@ -18,6 +18,15 @@ Project description
 
 `python test_run.py && python visualization.py`
 
+# More Notes
+
+- Test proportion of different models (create 9)
+- 2 clusters for HA. Human vs Human.
+- Humans vs Autonomous
+- H-A-H-A-H-A (50% H, 50% A)
+- H-A-A-H-A-A (33% H, 60% A)
+- Can do 4 models (Ha, Hb, Hc, A)
+
 # Notes
 
 - Perform inital dimension reduction on 3 second intervals of the training set.
