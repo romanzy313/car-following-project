@@ -88,18 +88,27 @@ def make_many_ai_models(
     return results
 
 
+brains = [
+    # "./src/HAmodel_scaler_cluster_0.0.pth",
+    "./src/HAmodel_scaler_cluster_1.0.pth",
+    # "./src/model_scaler_cluster_0.pth",
+    "./src/model_scaler_cluster_1.pth",
+]
+
+
 class TestDrive:
     # @pytest.mark.skip()
+    @pytest.mark.parametrize("brain_id", [0, 1])
     @pytest.mark.parametrize("speed", [1, 5, 10, 15])
-    def test_constant_speed(self, speed):
+    def test_constant_speed(self, speed, brain_id):
         # check that car can drive straight without colliding
 
-        remote_model = make_remote_model(5, make_constant_controller(speed))
-        ai_model = make_ai_model("1", 0, speed, "./src/model_scaler_cluster_1.pth")
+        remote_model = make_remote_model(40, make_constant_controller(speed))
+        ai_model = make_ai_model("1", 0, speed, brains[brain_id])
 
         runner = SimulationRunner(
             Scene(
-                name=f"constant_speed_{speed}",
+                name=f"constant_speed_{speed}.{brain_id}",
                 models=[ai_model, remote_model],
                 road_length=100,
                 max_iterations=500,
@@ -111,15 +120,16 @@ class TestDrive:
 
         assert runner.did_collide() == False, "collision"
 
+    @pytest.mark.parametrize("brain_id", [0, 1])
     @pytest.mark.parametrize("speed,min_speed,max_speed", [(1, 0.5, 1.5), (10, 9, 11)])
-    def test_single_keep_speed(self, speed, min_speed, max_speed):
+    def test_single_keep_speed(self, speed, min_speed, max_speed, brain_id):
         # check that car can drive straight without colliding
 
-        ai_model = make_ai_model("1", 0, speed, "./src/model_scaler_cluster_1.pth")
+        ai_model = make_ai_model("1", 0, speed, brains[brain_id])
 
         runner = SimulationRunner(
             Scene(
-                name=f"single_vehicle_{speed}",
+                name=f"single_vehicle_{speed}.{brain_id}",
                 models=[ai_model],
                 road_length=100,
                 max_iterations=300,
@@ -133,28 +143,25 @@ class TestDrive:
         assert final_vel < max_speed, f"too fast {final_vel}"
 
     # @pytest.mark.skip()
+    @pytest.mark.parametrize("brain_id", [0, 1])
     @pytest.mark.parametrize(
         "start_speed,end_speed,time",
         [(10, 8, 4.0), (10, 6, 3.0), (10, 4, 3), (10, 0, 10)],
     )
-    def test_rapid_break(self, start_speed: float, end_speed: float, time: float):
+    def test_rapid_break(
+        self, start_speed: float, end_speed: float, time: float, brain_id: int
+    ):
         timesteps = round(time / 0.1)
         remote_model = make_remote_model(
             60, make_linear_controller(start_speed, 200, 200 + timesteps, end_speed)
         )
-        ai_model1 = make_ai_model(
-            "1", 0, start_speed, "./src/model_scaler_cluster_1.pth"
-        )
-        ai_model2 = make_ai_model(
-            "2", 20, start_speed, "./src/model_scaler_cluster_1.pth"
-        )
-        ai_model3 = make_ai_model(
-            "3", 40, start_speed, "./src/model_scaler_cluster_1.pth"
-        )
+        ai_model1 = make_ai_model("1", 0, start_speed, brains[brain_id])
+        ai_model2 = make_ai_model("2", 20, start_speed, brains[brain_id])
+        ai_model3 = make_ai_model("3", 40, start_speed, brains[brain_id])
 
         runner = SimulationRunner(
             Scene(
-                name=f"deceleration_{start_speed}_{end_speed}_in_{time}",
+                name=f"deceleration_{start_speed}_{end_speed}_in_{time}.{brain_id}",
                 models=[ai_model1, ai_model2, ai_model3, remote_model],
                 road_length=100,
                 max_iterations=800,
@@ -167,6 +174,7 @@ class TestDrive:
         assert runner.did_collide() == False, "collision"
 
     # @pytest.mark.skip()
+    @pytest.mark.parametrize("brain_id", [0, 1])
     @pytest.mark.parametrize(
         "vehicle_count,initial_velocity,low_limit,high_limit",
         [(10, 2, 1, 3), (10, 5, 4, 6), (10, 10, 9, 11)],
@@ -177,13 +185,14 @@ class TestDrive:
         initial_velocity: float,
         low_limit: float,
         high_limit: float,
+        brain_id: int,
     ):
         scene = make_equadistent_scene(
-            scene_name=f"many_{vehicle_count}_at_speed_{initial_velocity}",
+            scene_name=f"many_{vehicle_count}_at_{initial_velocity}.{brain_id}",
             model_name="ModelV1",
             model_args={
                 "model_type": "H",
-                "data_file": "./src/model_scaler_cluster_0.pth",
+                "data_file": brains[brain_id],
             },
             vehicle=ai_vehicle,
             road_length=100,
@@ -202,18 +211,17 @@ class TestDrive:
         assert avg_vel < high_limit, f"too fast {avg_vel}"
 
     # this one keeps on failing
+    @pytest.mark.parametrize("brain_id", [0, 1])
     @pytest.mark.parametrize(
         "speed,count,min_speed,max_speed",
         [(10, 1, 1, 3), (10, 5, 4, 6), (10, 10, 9, 11)],
     )
-    def test_many_manual(self, speed, count, min_speed, max_speed):
+    def test_many_manual(self, speed, count, min_speed, max_speed, brain_id):
         # remote_model = make_remote_model(80, make_constant_controller(speed))
-        ai_models = make_many_ai_models(
-            count, 0, 60, speed, "./src/model_scaler_cluster_1.pth"
-        )
+        ai_models = make_many_ai_models(count, 0, 60, speed, brains[brain_id])
         runner = SimulationRunner(
             Scene(
-                name=f"many_count_{count}_at_speed_{speed}",
+                name=f"many_manual_{count}_at_{speed}.{brain_id}",
                 # models=[*ai_models, remote_model],
                 models=[*ai_models],
                 road_length=100,

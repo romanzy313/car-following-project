@@ -52,7 +52,12 @@ class Seq2Seq(nn.Module):
 class Seq2SeqRuntime:
     def __init__(self, name: str):
         # Load the checkpoint
-        self.checkpoint = torch.load(name)
+
+        device = (
+            torch.device("CUDA") if torch.cuda.is_available() else torch.device("cpu")
+        )
+
+        self.checkpoint = torch.load(name, map_location=torch.device(device))
         # Extract the scaler from the checkpoint
         self.scaler = self.checkpoint["scaler"]
 
