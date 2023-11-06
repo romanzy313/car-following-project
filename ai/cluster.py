@@ -1,5 +1,6 @@
 # %%
 import numpy as np
+import pandas as pd
 from read_data import read_data
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
@@ -121,11 +122,11 @@ def plot_clusters(features, labels, pca_data=None):
             features.iloc[:, 2],
             c=labels,
             cmap="viridis",
-            s=50, # type: ignore
+            s=50,  # type: ignore
         )
         ax.set_xlabel("Feature 1")
         ax.set_ylabel("Feature 2")
-        ax.set_zlabel("Feature 3") # type: ignore
+        ax.set_zlabel("Feature 3")  # type: ignore
         ax.set_title("K-Means Clustering Results")
     plt.show()
 
@@ -191,16 +192,33 @@ def get_clustered_df(features):
     return features_numeric
 
 
+def train_df(dataset: str, clustered_data: pd.DataFrame, mode: str):
+    """
+    Returns a DataFrame with delta position, delta velocity, v_follower and cluster.
+    """
+    data = read_data(dataset, mode)
+    data["delta_position"] = data["x_leader"] - data["x_follower"]
+    data["delta_velocity"] = data["v_follower"] - data["v_leader"]
+
+    # Merge the data with clustered_data on 'case_id' to get the 'cluster' column
+    data = pd.merge(
+        data, clustered_data[["case_id", "cluster"]], on="case_id", how="left"
+    )
+    data = data[["delta_position", "delta_velocity", "v_follower", "cluster"]]
+    # print(data.head())
+    return data
+
+
 out_dir = "../out_cluster"
 
-# %% only do AH
+# # %% only do AH
 
-# save Ah as a single cluster
-AH_data = convert_df("AH", "train")
-runtime_data = AH_data[["delta_velocity", "delta_position", "v_follower"]]
-file_name = f"{out_dir}/AH_0.zarr"
-print("saving AH dataset to", file_name)
-zarr.save(file_name, runtime_data)
+# # save Ah as a single cluster
+# AH_data = convert_df("AH", "train")
+# runtime_data = AH_data[["delta_velocity", "delta_position", "v_follower"]]
+# file_name = f"{out_dir}/AH_0.zarr"
+# print("saving AH dataset to", file_name)
+# zarr.save(file_name, runtime_data)
 
 
 # %% now cluster other datasets and save them
@@ -210,10 +228,10 @@ for dataset in datasets:
     print("clustering dataset", dataset)
     AH_data = convert_df(dataset, "train")
     clustered_data = get_clustered_df(AH_data)
-
-    runtime_data = clustered_data[
-        ["delta_velocity", "delta_position", "v_follower", "cluster"]
-    ]
+    runtime_data = train_df(dataset, clustered_data, "train")
+    # runtime_data = clustered_data[
+    #     ["delta_velocity", "delta_position", "v_follower", "cluster"]
+    # ]
     grouped = runtime_data.groupby("cluster")
 
     for cluster_value, group_df in grouped:
@@ -225,3 +243,5 @@ for dataset in datasets:
         print("saving cluster result to", file_name)
         # print(group_df)
         zarr.save(file_name, group_df)
+
+# %%
