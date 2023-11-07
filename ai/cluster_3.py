@@ -188,7 +188,7 @@ def preprocess_features(features):
     ]
     normalized_data = scaler.fit_transform(features_numeric)
 
-    return normalized_data, features_numeric
+    return normalized_data, features
 
 
 def apply_dimensionality_reduction(data, n_components=PCA_COMPONENTS):
