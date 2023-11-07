@@ -162,10 +162,18 @@ def create_dataloader(setname, type):
     )
     # Create dataloader to be used
     train_dataloader = DataLoader(
-        CreateDataset(train_features_HA, train_labels_HA), batch_size=64, shuffle=False
+        CreateDataset(train_features_HA, train_labels_HA),
+        batch_size=64,
+        shuffle=False,
+        pin_memory=True,
+        persistent_workers=True,
     )  # batch_size can also be 128
     test_dataloader = DataLoader(
-        CreateDataset(test_features_HA, test_labels_HA), batch_size=64, shuffle=False
+        CreateDataset(test_features_HA, test_labels_HA),
+        batch_size=64,
+        shuffle=False,
+        pin_memory=True,
+        persistent_workers=True,
     )
 
     return train_dataloader, test_dataloader
