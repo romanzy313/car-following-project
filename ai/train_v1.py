@@ -354,15 +354,15 @@ cluster_dir = "../out_cluster"
 brain_dir = "../out_brain"
 n_steps_in = 30
 n_steps_out = 10
-epochs = 5
+epochs = 100
 lr = 0.01
 device = "auto"
-num_workers = multiprocessing.cpu_count()
+num_workers = multiprocessing.cpu_count() / 2
 
 # set the dataset and mode
 if __name__ == "__main__":
     # datas = find_all_clusters()
-    datas = [{"dataset": "HA", "cluster": 0, "file": "./out_cluster/HA_0.zarr"}]
+    datas = [{"dataset": "HA", "cluster": 0, "file": "../out_cluster/AH_0.zarr"}]
     os.makedirs(brain_dir, exist_ok=True)
     for v in tqdm(datas, position=0, leave=False, desc="per cluster", colour="green"):
         dataset = v["dataset"]
