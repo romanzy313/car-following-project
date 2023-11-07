@@ -1,10 +1,8 @@
 from typing import List
-from src.Sec2SecRuntime import Seq2SeqRuntime
+from ai.Sec2SecRuntime import Seq2SeqRuntime
 from src.model import Model
-import torch
 import pandas as pd
 import numpy as np
-import torch.nn as nn
 
 
 class Definition(Model):

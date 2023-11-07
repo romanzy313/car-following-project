@@ -1,22 +1,47 @@
 # Difference in car-following interaction between following a human-driven vehicle and an autonomous vehicle project
 
+Short description here
+
+## Gettign started
+
+Install pipenv if not already installed.
+
+```sh
+pip install pipenv
+```
+
+Install all packages from `Pipfile.lock`, this will take a while.
+
+```sh
+pipenv install -d
+```
+
+Enter subshell
+
+```sh
+pipenv shell
+```
+
+Run simple example. It will solve simple simulation and run visualization of the result
+
+```sh
+python example_run.py && python visualization.py --file ./results/test_run.json
+```
+
+## Rebuilding al training data
+
+This repo contains a trained model of 5 different datasets (2 HA, 2 HH, 1 AH) clusters.
+Re-clustering and re-training can be performed by running `sh ./train.sh`
+
 ## Run tests
+
+There are a lot of tests to verify that the model works as expected. These tests can be run with the following command:
 
 `pytest -n 2 tests.py`
 
-### only a subset of tests
+Running the test will output many simulations in `test_results` folder. They can be visualized inidividually by running
 
-`pytest -n 2 -k manual ./tests.py`
-
-## Visualize output
-
-`python visualization.py -f ./test_results/deceleration_10_4_in_3.json`
-
-Project description
-
-# Run example simulation
-
-`python test_run.py && python visualization.py`
+`python visualization.py -f ./test_results/....json`
 
 # More Notes
 
@@ -37,11 +62,6 @@ Project description
 - Other useful features maxA, maxV, std of anything. etc...
 - Then do simulation by selecting populations of data
 - Set acceleration as the output variable
-
-# Tutorials
-
-- Enter virtual environment with `pipenv shell`
-- Install packages via `pipenv install ...`
 
 # How to use
 
