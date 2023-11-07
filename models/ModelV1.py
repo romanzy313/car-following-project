@@ -34,9 +34,21 @@ class Definition(Model):
 
         prophecy = self.model.predict(runtime_data)
 
-        # print("simulation output is", prophecy)
+        # print("simulation output is")
+        # print(prophecy)
 
-        result_acceleration = prophecy[0][1]
+        # average it
+        # result_acceleration = np.average(prophecy[:, 1])
+        result_acceleration = prophecy[0, 1]
+        print(
+            "prediction",
+            result_acceleration,
+            "for delta pos",
+            delta_positions[-1],
+            "delta vel",
+            delta_velocities[-1],
+        )
+        print()
 
         # desired_velocity = prophecy[0][2]
 
