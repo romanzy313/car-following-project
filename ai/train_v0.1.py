@@ -38,7 +38,8 @@ def preprocess_data(df, n_steps_in=30, n_steps_out=10, test_size=0.2):
 
 def create_sequences(data, n_steps_in, n_steps_out):
     X, y = [], []
-    for i in range(0, len(data) - n_steps_in - n_steps_out + 5):
+    # usae 20% of data
+    for i in range(0, len(data) - n_steps_in - n_steps_out + 5, 5):
         seq_x = data[i : i + n_steps_in]
         seq_y = data[i + n_steps_in : i + n_steps_in + n_steps_out]
         if seq_x.shape[0] == n_steps_in and seq_y.shape[0] == n_steps_out:
@@ -104,24 +105,37 @@ def evaluate_model(
 
 def train_model(
     model,
-    dataloader,
+    # dataloader,
     epochs,
     optimizer,
     loss_function,
     device,
+    train_dataset,
     accumulation_steps=4,
 ):
     model.to(device)  # Ensure model is on the correct device
 
+    print("train dataset", train_dataset.__len__())
+
+    print("train dataset 0", train_dataset[0].__len__())
+
     for epoch in tqdm(
         range(epochs), position=1, leave=False, desc="training", colour="red"
     ):
+        # tqdm.write("hello world")
+        # time.sleep(0.2)
+        # continue
         model.train()
         optimizer.zero_grad()  # Reset gradients tensors
-        for i, (X_batch, y_batch) in enumerate(dataloader):
-            X_batch, y_batch = X_batch.to(device), y_batch.to(
-                device
-            )  # Move batch data to the device
+        for full in train_dataset:
+            X_batch = torch.from_numpy(full[0]).float()
+            y_batch = torch.from_numpy(full[1]).float()
+            # print(
+            #     f"Batch {i} - X_batch shape: {X_batch.shape}, y_batch shape: {y_batch.shape}"
+            # )  # Debugging line
+            # X_batch, y_batch = X_batch.to(device), y_batch.to(
+            #     device
+            # )  # Move batch data to the device
 
             y_pred = model(X_batch)
             loss = (
@@ -129,10 +143,15 @@ def train_model(
             )  # Normalize our loss
 
             loss.backward()
-            optimizer.step()
             # if (i + 1) % accumulation_steps == 0 or i + 1 == len(dataloader):
-            #     optimizer.step()  # Perform a single optimization step
-            #     optimizer.zero_grad()  # Reset gradients tensors
+            optimizer.step()  # Perform a single optimization step
+            # optimizer.zero_grad()  # Reset gradients tensors
+
+            # Clear some memory
+            # del X_batch, y_batch, y_pred
+            # gc.collect()  # Force garbage collection
+            # if device == "cuda":
+            #     torch.cuda.empty_cache()  # Clear cache if on GPU
 
         if epoch % 10 == 0:
             tqdm.write(
@@ -167,41 +186,50 @@ def run_training(
     if cluster_df.empty:
         raise Exception(f"Cluster {dataset}_{cluster_idx} is empty.")
 
-    (
-        X_train_tensor,
-        y_train_tensor,
-        X_test_tensor,
-        y_test_tensor,
-        scaler,
-    ) = preprocess_data(cluster_df, n_steps_in, n_steps_out)
+    # (
+    #     X_train_tensor,
+    #     y_train_tensor,
+    #     X_test_tensor,
+    #     y_test_tensor,
+    #     scaler,
+    # ) = preprocess_data(cluster_df, n_steps_in, n_steps_out)
 
-    X_train_tensor = X_train_tensor.to(device)
-    y_train_tensor = y_train_tensor.to(device)
+    scaler = StandardScaler()
+    data_normalized = scaler.fit_transform(cluster_df)
+
+    print("scaler mean", scaler.mean_)
+
+    X_train_tensor, y_train_tensor = create_sequences(
+        data_normalized, n_steps_in, n_steps_out
+    )
+
+    # X_train_tensor = X_train_tensor.to(device)
+    # y_train_tensor = y_train_tensor.to(device)
     # X_test_tensor = X_test_tensor.to(device)
     # y_test_tensor = y_test_tensor.to(device)
     # Create a DataLoader for batching
-    train_dataset = TensorDataset(
-        X_train_tensor,
-        y_train_tensor,
-    )
-    # Use num_workers and pin_memory for faster data loading
-    train_dataloader = DataLoader(
-        train_dataset,
-        batch_size=35 * 12,
-        shuffle=False,
-        num_workers=num_workers,  # or more, depending on your CPU and data
-        pin_memory=False,
-        persistent_workers=True
-        # pin_memory=False
-        # pin_memory=True
-        # if device == "cuda"
-        # else False,  # helps with faster data transfer to GPU
-    )
+    # train_dataset = TensorDataset(
+    #     X_train_tensor,
+    #     y_train_tensor,
+    # )
+    # # Use num_workers and pin_memory for faster data loading
+    # train_dataloader = DataLoader(
+    #     train_dataset,
+    #     batch_size=256,
+    #     shuffle=False,
+    #     num_workers=num_workers,  # or more, depending on your CPU and data
+    #     pin_memory=False,
+    #     persistent_workers=True
+    #     # pin_memory=False
+    #     # pin_memory=True
+    #     # if device == "cuda"
+    #     # else False,  # helps with faster data transfer to GPU
+    # )
 
     model = Seq2Seq(
-        input_size=X_train_tensor.shape[2],
+        input_size=3,
         hidden_size=128,
-        output_size=y_train_tensor.shape[2],
+        output_size=3,
         n_steps_out=n_steps_out,
     )
     optimizer = optim.Adam(model.parameters(), lr=lr)
@@ -211,11 +239,16 @@ def run_training(
 
     train_model(
         model,
-        train_dataloader,  # Pass the DataLoader instead of tensors directly
+        # train_dataloader,  # Pass the DataLoader instead of tensors directly
         epochs,
         optimizer,
         loss_function,
         device,  # Pass the device to the training function
+        train_dataset=[
+            X_train_tensor,
+            y_train_tensor,
+        ],
+        # train_dataset=train_dataset,
     )
 
     file_location = f"{brain_dir}/{dataset}_{cluster_idx}.pth"
@@ -224,9 +257,9 @@ def run_training(
         {"model_state_dict": model.state_dict(), "scaler": scaler},
         file_location,
     )
-    evaluate_model(
-        dataset, cluster_idx, model, X_test_tensor, y_test_tensor, scaler, device
-    )
+    # evaluate_model(
+    #     dataset, cluster_idx, model, X_test_tensor, y_test_tensor, scaler, device
+    # )
 
     models_scalers = (model, scaler)
 
@@ -276,12 +309,12 @@ n_steps_out = 10
 epochs = 30
 lr = 0.01
 device = "auto"
-num_workers = multiprocessing.cpu_count()
+num_workers = round(multiprocessing.cpu_count() / 2)
 
 # set the dataset and mode
 if __name__ == "__main__":
     # datas = find_all_clusters()
-    datas = [{"dataset": "AH", "cluster": 0, "file": "../out_cluster/AH_0.zarr"}]
+    datas = [{"dataset": "HA", "cluster": 1, "file": "../out_cluster/HA_1.zarr"}]
     print("running clustering on following datasets:", datas)
     os.makedirs(brain_dir, exist_ok=True)
     for v in tqdm(datas, position=0, leave=False, desc=" cluster", colour="green"):
@@ -289,3 +322,22 @@ if __name__ == "__main__":
         cluster_idx = v["cluster"]
         file = v["file"]
         train_cluster(dataset, cluster_idx, file)
+
+
+class CreateDataset:
+    def __init__(self, features, labels):
+        self.labels = labels.sort_values(["idx", "time"]).set_index("idx")
+        self.features = features.sort_values(["idx", "time"]).set_index("idx")
+
+    def __len__(self):
+        return self.labels.index.nunique()
+
+    def __getitem__(self, idx):
+        # idx is the index of items in the data and labels
+        history = self.features.loc[idx][
+            ["delta_velocity", "delta_position", "v_follower"]
+        ].values
+        history = torch.from_numpy(history).float()
+        future = self.labels[idx]["v_follower"].values
+        future = torch.from_numpy(future).float()
+        return history, future

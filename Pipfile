@@ -32,6 +32,7 @@ torchvision = {version = "==0.15.2", index = "downloadpytorch"}
 torchaudio = {version = "==2.0.2", index = "downloadpytorch"}
 nbimporter = "*"
 nbformat = "*"
+tables = "*"
 
 [dev-packages]
 black = "*"
