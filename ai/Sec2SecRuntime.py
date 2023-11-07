@@ -42,6 +42,11 @@ class Seq2Seq(nn.Module):
         self.n_steps_out = n_steps_out
 
     def forward(self, x):
+        device = (
+            torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+        )
+
+        x = x.to(device)
         hidden, cell = self.encoder(x)
         decoder_input = torch.zeros(
             (x.size(0), self.n_steps_out, self.decoder.lstm.input_size)
