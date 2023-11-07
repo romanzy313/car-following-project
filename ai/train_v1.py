@@ -150,6 +150,7 @@ def run_training(
         shuffle=False,
         num_workers=num_workers,  # or more, depending on your CPU and data
         pin_memory=True,  # helps with faster data transfer to GPU
+        persistent_workers=True,
     )
 
     model = Seq2Seq(
@@ -269,7 +270,7 @@ cluster_dir = "../out_cluster"
 brain_dir = "../out_brain"
 n_steps_in = 30
 n_steps_out = 10
-epochs = 100
+epochs = 1
 lr = 0.01
 device = "auto"
 num_workers = multiprocessing.cpu_count()
