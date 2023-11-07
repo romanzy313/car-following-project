@@ -199,7 +199,7 @@ def run_training(
     train_dataloader = DataLoader(
         train_dataset,
         # batch_size=256,
-        batch_size=256,
+        batch_size=1024,
         shuffle=True,
         num_workers=num_workers,  # or more, depending on your CPU and data
         pin_memory=True,
@@ -285,14 +285,15 @@ cluster_dir = "../out_cluster"
 brain_dir = "../out_brain"
 n_steps_in = 30
 n_steps_out = 10
-epochs = 100
+epochs = 40
 lr = 0.01
 device = "auto"
 num_workers = multiprocessing.cpu_count()
 
 # set the dataset and mode
 if __name__ == "__main__":
-    datas = [{"dataset": "AH", "cluster": 0, "file": "../out_cluster/AH_0.zarr"}]
+    datas = find_all_clusters()
+    print("running clustering on following datasets:", datas)
     os.makedirs(brain_dir, exist_ok=True)
     for v in tqdm(datas, position=0, leave=False, desc=" cluster", colour="green"):
         dataset = v["dataset"]
