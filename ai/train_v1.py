@@ -13,38 +13,9 @@ import torch.optim as optim
 import gc
 from tqdm import tqdm
 import math
-from torch.utils.data import DataLoader, TensorDataset
+from torch.utils.data import DataLoader, TensorDataset, Dataset
 from glob import glob
 import re
-
-
-def preprocess_data(df, n_steps_in=30, n_steps_out=10, test_size=0.2):
-    # 只保留需要的列
-    df = df[["delta_position", "delta_velocity", "v_follower"]]
-    scaler = StandardScaler()
-    data_normalized = scaler.fit_transform(df)
-    X, y = create_sequences(data_normalized, n_steps_in, n_steps_out)
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=test_size, random_state=42
-    )
-    return (
-        torch.tensor(X_train, dtype=torch.float32),
-        torch.tensor(y_train, dtype=torch.float32),
-        torch.tensor(X_test, dtype=torch.float32),
-        torch.tensor(y_test, dtype=torch.float32),
-        scaler,
-    )
-
-
-def create_sequences(data, n_steps_in, n_steps_out):
-    X, y = [], []
-    for i in range(0, len(data) - n_steps_in - n_steps_out + 5):
-        seq_x = data[i : i + n_steps_in]
-        seq_y = data[i + n_steps_in : i + n_steps_in + n_steps_out]
-        if seq_x.shape[0] == n_steps_in and seq_y.shape[0] == n_steps_out:
-            X.append(seq_x)
-            y.append(seq_y)
-    return np.array(X), np.array(y)
 
 
 def evaluate_model(
@@ -116,43 +87,35 @@ def train_model(
     for epoch in tqdm(
         range(epochs), position=1, leave=False, desc="training", colour="red"
     ):
-        # tqdm.write("hello world")
-        # time.sleep(0.2)
-        # continue
         model.train()
-        optimizer.zero_grad()  # Reset gradients tensors
-        for i, (X_batch, y_batch) in enumerate(dataloader):
-            # print(
-            #     f"Batch {i} - X_batch shape: {X_batch.shape}, y_batch shape: {y_batch.shape}"
-            # )  # Debugging line
-            X_batch, y_batch = X_batch.to(device), y_batch.to(
-                device
-            )  # Move batch data to the device
+        for data in dataloader:
+            """
+            data is a array which shape is (batch_size*n_steps_in = 40 * features = 3)
+            """
+            optimizer.zero_grad()  # Reset gradients tensors
 
-            y_pred = model(X_batch)
-            loss = (
-                loss_function(y_pred, y_batch) / accumulation_steps
-            )  # Normalize our loss
+            input_seq = data[:, :30, :]  # 形状为 [256, 30, 3]
+            ground_truth = data[:, -10:, :]  # 形状为 [256, 10, 3]
 
-            loss.backward()
-            if (i + 1) % accumulation_steps == 0 or i + 1 == len(dataloader):
-                optimizer.step()  # Perform a single optimization step
-                optimizer.zero_grad()  # Reset gradients tensors
+            # 将输入序列传递给模型
+            output_seq = model(input_seq)  # 模型输出形状应该是 [256, 10, 3]
 
-            # Clear some memory
-            del X_batch, y_batch, y_pred
-            # gc.collect()  # Force garbage collection
-            if device == "cuda":
-                torch.cuda.empty_cache()  # Clear cache if on GPU
+            # 计算损失，即模型输出和 ground truth 的 MSE
+            loss = loss_function(output_seq, ground_truth)
 
+            # 反向传播和优化
+
+            loss.backward()  # 反向传播计算梯度
+            optimizer.step()  # 更新模型参数
+        # 每个epoch更新loss值，或者说监控模型性能的功能
         if epoch % 10 == 0:
             tqdm.write(
                 f"[{dataset}_{cluster_idx}] Epoch: {epoch} Loss: {loss.item() * accumulation_steps:.4f}"  # type: ignore
-            )  # Adjust the loss value
+            )
 
 
 def run_training(
-    cluster_df,
+    sequenced_dataset,
     dataset,
     cluster_idx,
     n_steps_in,
@@ -169,51 +132,30 @@ def run_training(
     device = (
         ("cuda" if torch.cuda.is_available() else "cpu") if device == "auto" else device
     )
-    tqdm.write(
-        f"[{dataset}_{cluster_idx}] using device {device} and {num_workers} workers"
-    )
+    tqdm.write(f"[{dataset}_{cluster_idx}] using device {device}")
     # for j in tqdm(range(10), desc="j", colour='red'):
     # time.sleep(0.5)
     # for cluster, cluster_df in clustered_dataframes.items():
-    if cluster_df.empty:
+    if sequenced_dataset.__len__() == 0:
         raise Exception(f"Cluster {dataset}_{cluster_idx} is empty.")
 
-    (
-        X_train_tensor,
-        y_train_tensor,
-        X_test_tensor,
-        y_test_tensor,
-        scaler,
-    ) = preprocess_data(cluster_df, n_steps_in, n_steps_out)
-
-    # X_train_tensor = X_train_tensor.to(device)
-    # y_train_tensor = y_train_tensor.to(device)
-    # X_test_tensor = X_test_tensor.to(device)
-    # y_test_tensor = y_test_tensor.to(device)
     # Create a DataLoader for batching
-    train_dataset = TensorDataset(
-        X_train_tensor,
-        y_train_tensor,
-    )
+
+    train_dataset, scaler = preprocess_data(sequenced_dataset)
+
     # Use num_workers and pin_memory for faster data loading
     train_dataloader = DataLoader(
-        train_dataset,
-        # batch_size=256,
+        train_dataset,  # type: ignore
         batch_size=256,
-        shuffle=True,
+        shuffle=False,
         num_workers=num_workers,  # or more, depending on your CPU and data
-        pin_memory=True,
-        persistent_workers=True
-        # pin_memory=False
-        # pin_memory=True
-        # if device == "cuda"
-        # else False,  # helps with faster data transfer to GPU
+        pin_memory=True,  # helps with faster data transfer to GPU
     )
 
     model = Seq2Seq(
-        input_size=X_train_tensor.shape[2],
+        input_size=3,
         hidden_size=128,
-        output_size=y_train_tensor.shape[2],
+        output_size=3,
         n_steps_out=n_steps_out,
     )
     optimizer = optim.Adam(model.parameters(), lr=lr)
@@ -262,13 +204,55 @@ def find_all_clusters():
     # for i in tqdm(datasets, position=0, leave=False, desc="i", colour="green"):
 
 
+class MyCustomDataset(Dataset):
+    def __init__(self, data_list):
+        self.data_list = data_list
+
+    def __len__(self):
+        return len(self.data_list)
+
+    def __getitem__(self, idx):
+        # 假设我们只返回数据，没有标签
+        data = self.data_list[idx]
+        return torch.tensor(data, dtype=torch.float32)
+
+
+def preprocess_data(df):
+    scaler = StandardScaler()
+    data_normalized = scaler.fit_transform(df)
+
+    return (data_normalized, scaler)
+
+
+def create_sequences(data, n_steps_in, n_steps_out):
+    X, y = [], []
+    for i in range(0, len(data) - n_steps_in - n_steps_out + 5):
+        seq_x = data[i : i + n_steps_in]
+        seq_y = data[i + n_steps_in : i + n_steps_in + n_steps_out]
+        if seq_x.shape[0] == n_steps_in and seq_y.shape[0] == n_steps_out:
+            X.append(seq_x)
+            y.append(seq_y)
+    return np.array(X), np.array(y)
+
+
 def train_cluster(dataset: str, cluster_idx: int, file: str):
     train_data = read_clustered_data(file)
-    tqdm.write(f"[{dataset}_{cluster_idx}] Dataset size {train_data.shape}")
+    data_points = []
+    for start in range(0, len(train_data), 40):
+        # 保证不越界
+        end = start + 40
+        if end <= len(train_data):
+            data_point = train_data.iloc[start:end].values  # 将 DataFrame 转换成 NumPy 数组
+            data_points.append(data_point)
+    sequenced_dataset = MyCustomDataset(data_points)
+    print(type(sequenced_dataset))
+    print(f"This is the shape after sequenced", sequenced_dataset.__len__())
+
+    tqdm.write(f"[{dataset}_{cluster_idx}] Dataset size {sequenced_dataset.__len__()}")
 
     # train_data = train_data.sample(frac=0.01, random_state=1)
     run_training(
-        cluster_df=train_data,
+        sequenced_dataset=sequenced_dataset,  # type: ignore
         dataset=dataset,
         cluster_idx=cluster_idx,
         n_steps_in=n_steps_in,
@@ -292,9 +276,9 @@ num_workers = multiprocessing.cpu_count()
 
 # set the dataset and mode
 if __name__ == "__main__":
-    datas = [{"dataset": "AH", "cluster": 0, "file": "../out_cluster/AH_0.zarr"}]
+    datas = find_all_clusters()
     os.makedirs(brain_dir, exist_ok=True)
-    for v in tqdm(datas, position=0, leave=False, desc=" cluster", colour="green"):
+    for v in tqdm(datas, position=0, leave=False, desc="per cluster", colour="green"):
         dataset = v["dataset"]
         cluster_idx = v["cluster"]
         file = v["file"]

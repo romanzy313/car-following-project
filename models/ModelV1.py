@@ -6,16 +6,16 @@ import numpy as np
 
 
 class Definition(Model):
-    model_type: str  # this is either A or H
+    dataset: str  # this is either A or H
     model: Seq2SeqRuntime
 
     def inject_args(self, args):
         # pass
-        self.model_type = args["model_type"]
+        self.dataset = args["model_type"]
         model_file = args["data_file"]
         assert model_file, "data file not provided"
         self.model = Seq2SeqRuntime(model_file)
-        self.name = f"ModelV1_{self.model_type}"
+        self.name = f"ModelV1_{self.dataset}"
         # print(f"{self.name} loaded data_file {model_file}")
 
     def tick(
@@ -48,8 +48,8 @@ class Definition(Model):
         #     result_acceleration,
         # )
 
-        if result_acceleration < 0:
-            print(self.id, "is breaking!", round(result_acceleration, 2))
+        # if result_acceleration < 0:
+        # print(self.id, "is breaking!", round(result_acceleration, 2))
 
         # boosted was removed
         return result_acceleration
