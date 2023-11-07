@@ -173,7 +173,19 @@ def preprocess_features(features):
 
     # Standardize features by removing the mean and scaling to unit variance
     scaler = StandardScaler()
-    features_numeric = features.select_dtypes(include=[np.number])
+    features_numeric = features[
+        [
+            "delta_velocity",
+            "v_follower",
+            "delta_acceleration",
+            "a_follower",
+            "jerk_follower",
+            "time_headway",
+            "delta_position",
+            "TTC",
+            "TTC_min",
+        ]
+    ]
     normalized_data = scaler.fit_transform(features_numeric)
 
     return normalized_data, features_numeric
@@ -217,7 +229,7 @@ def plot_clusters(features, labels, pca_data=None):
     plt.show()
 
 
-def find_optimal_clusters(data, max_clusters=5):
+def find_optimal_clusters(data, max_clusters=12):
     """Determine the optimal cluster count using silhouette score and elbow method."""
     inertia_list = []
     silhouette_scores = []
@@ -257,23 +269,24 @@ def get_clustered_df(features):
     # Load and preprocess the data
 
     normalized_data, features_numeric = preprocess_features(features)
-    # Optionally apply PCA
-    pca_data = apply_dimensionality_reduction(normalized_data)
 
     # Find the optimal number of clusters
-    optimal_clusters = find_optimal_clusters(pca_data)
+    # optimal_clusters = find_optimal_clusters(normalized_data)
+    optimal_clusters = 3
 
     print("found optimal number of clusters to be", optimal_clusters)
     # Perform clustering with the optimal number of clusters
-    labels = perform_clustering(pca_data, optimal_clusters)
+    labels = perform_clustering(normalized_data, optimal_clusters)
     features_numeric["cluster"] = labels
 
     # Plot the results
     if plot:
-        plot_clusters(normalized_data, labels, pca_data)
+        # Optionally apply PCA
+        pca_data = apply_dimensionality_reduction(normalized_data)
+        plot_clusters(features_numeric, labels, pca_data)
 
     # Compute and display the average silhouette score
-    silhouette_avg = silhouette_score(pca_data, labels)
+    silhouette_avg = silhouette_score(normalized_data, labels)
     print(f"The average silhouette_score is: {silhouette_avg}")
 
     return features_numeric
