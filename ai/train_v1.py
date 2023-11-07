@@ -193,7 +193,7 @@ def find_all_clusters():
     result = []
 
     for path in all_datasets:
-        match = re.match(r".*?/([AH]+)_([0-9]+)\.zarr", path)
+        match = re.match(r".*?/([AH|HA|HH]+)_([0-9]+)\.zarr", path)
         if match:
             dataset_name, cluster = match.groups()
             cluster = int(cluster)
