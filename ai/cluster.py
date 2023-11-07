@@ -215,7 +215,7 @@ out_dir = "../out_cluster"
 
 # # save Ah as a single cluster
 # AH_data = convert_df("AH", "train")
-# runtime_data = AH_data[["delta_velocity", "delta_position", "v_follower"]]
+# runtime_data = AH_data[["delta_position", "delta_velocity", "v_follower"]]
 # file_name = f"{out_dir}/AH_0.zarr"
 # print("saving AH dataset to", file_name)
 # zarr.save(file_name, runtime_data)

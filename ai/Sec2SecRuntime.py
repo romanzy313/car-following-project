@@ -54,48 +54,31 @@ class Seq2Seq(nn.Module):
 class Seq2SeqRuntime:
     def __init__(self, name: str):
         # Load the checkpoint
-        with warnings.catch_warnings():
-            warnings.filterwarnings(
-                action="ignore",
-                # category=DeprecationWarning,
-                module=r".*sklearn",
-            )
+        # with warnings.catch_warnings():
+        # warnings.filterwarnings(
+        #     action="ignore",
+        #     # category=DeprecationWarning,
+        #     module=r".*sklearn",
+        # )
 
-            device = (
-                torch.device("CUDA")
-                if torch.cuda.is_available()
-                else torch.device("cpu")
-            )
-
-            self.checkpoint = torch.load(name, map_location=torch.device(device))
-            # Extract the scaler from the checkpoint
-            self.scaler = self.checkpoint["scaler"]
-
-    def preprocess_data_for_inference(self, df, n_steps_in, n_steps_out):
-        # Normalize the data
-        data_normalized = self.scaler.transform(
-            df
-        )  # Note: use transform, not fit_transform
-        # print(data_normalized.shape)
-        X = self.create_sequences_for_inference(
-            data_normalized, n_steps_in, n_steps_out
+        device = (
+            torch.device("CUDA") if torch.cuda.is_available() else torch.device("cpu")
         )
-        # print(X.shape)
-        return torch.tensor(X, dtype=torch.float32)
 
-    def create_sequences_for_inference(self, data, n_steps_in, n_steps_out):
-        X = []
-        for i in range(0, len(data) - n_steps_in - n_steps_out + 5):
-            seq_x = data[i : i + n_steps_in]
-            if seq_x.shape[0] == n_steps_in:
-                X.append(seq_x)
-        return np.array(X)
+        self.checkpoint = torch.load(name, map_location=torch.device(device))
+        # Extract the scaler from the checkpoint
+        self.scaler = self.checkpoint["scaler"]
 
-    # this function needs to do all the work instead of `create_sequences_for_inference`
-    def process_runtime_data(self, df):
-        data_normalized = self.scaler.transform(df)
-        X = np.array(data_normalized)
-        return torch.tensor(X, dtype=torch.float32)
+        self.model = Seq2Seq(
+            input_size=3,
+            hidden_size=128,
+            n_steps_out=1,
+            output_size=3,
+        )
+
+        # Load model's state dictionary from the checkpoint
+        self.model.load_state_dict(self.checkpoint["model_state_dict"])
+        self.model.eval()
 
     def predict(self, eval_df):
         """
@@ -110,38 +93,45 @@ class Seq2SeqRuntime:
 
         """
 
+        print("eval df")
+        print(eval_df)
+
+        data_normalized = self.scaler.transform(eval_df)
+        print("data normalized")
+        print(data_normalized)
+        X = []
+        X.append(data_normalized)
+        X_new_tensor = torch.tensor(X, dtype=torch.float32)
+        self.model.eval()
+        with torch.no_grad():
+            y_new_pred_tensor = self.model(X_new_tensor)
+            y_new_pred = y_new_pred_tensor.numpy()
+        y_first_pred = y_new_pred[0, :, :]
+        # y_first_pred_original = self.scaler.inverse_transform(y_first_pred)
+
+        return y_first_pred
         # print(f"X_input_tensor", eval_df.shape)
         # Preprocess the data
-        X_new_tensor = self.preprocess_data_for_inference(eval_df, 10, 0)
+        # X_new_tensor = self.preprocess_data_for_inference(eval_df, 10, 0)
         # X_new_tensor = process_runtime_data(eval_df) # Need to use something like this instead
         # print(f"X_new_tensor", X_new_tensor.shape)
         # Initialize the model based on the shape of the input data
-        model = Seq2Seq(
-            input_size=X_new_tensor.shape[2],
-            hidden_size=128,
-            n_steps_out=10,
-            output_size=X_new_tensor.shape[2],
-        )
-
-        # Load model's state dictionary from the checkpoint
-        model.load_state_dict(self.checkpoint["model_state_dict"])
+        # model = Seq2Seq(
+        #     input_size=X_new_tensor.shape[2],
+        #     hidden_size=128,
+        #     n_steps_out=10,
+        #     output_size=X_new_tensor.shape[2],
+        # )
 
         # Predict using the model
-        model.eval()
-        with torch.no_grad():
-            y_new_pred_tensor = model(X_new_tensor)
-            y_new_pred = y_new_pred_tensor.numpy()
+
         # print(f"y_new_pred_tensor",y_test_tensor.shape)
         # print(y_new_pred.shape)
 
         # Take the first prediction from the first sequence
-        y_first_pred = y_new_pred[0, :, :]
         # print(f"first predict", y_first_pred.shape)
         # print(y_first_pred)
         # Inverse transform the predictions to the original scale
-        y_first_pred_original = self.scaler.inverse_transform(y_first_pred)
-
-        return y_first_pred_original
 
         # Extract the denormalized delta_velocity values
         # delta_velocity_pred_original = y_first_pred_original[:, delta_velocity_index]

@@ -6,16 +6,16 @@ import numpy as np
 
 
 class Definition(Model):
-    model_type: str  # this is either A or H
+    dataset: str  # this is either A or H
     model: Seq2SeqRuntime
 
     def inject_args(self, args):
         # pass
-        self.model_type = args["model_type"]
+        self.dataset = args["model_type"]
         model_file = args["data_file"]
         assert model_file, "data file not provided"
         self.model = Seq2SeqRuntime(model_file)
-        self.name = f"ModelV1_{self.model_type}"
+        self.name = f"ModelV1_{self.dataset}"
         # print(f"{self.name} loaded data_file {model_file}")
 
     def tick(
@@ -34,9 +34,20 @@ class Definition(Model):
 
         prophecy = self.model.predict(runtime_data)
 
-        # print("simulation output is", prophecy)
+        # print("simulation output is")
+        # print(prophecy)
 
-        result_acceleration = prophecy[0][1]
+        # average it
+        # result_acceleration = np.average(prophecy[:, 1])
+        result_acceleration = prophecy[0, 1]
+        print(
+            "prediction",
+            result_acceleration,
+            "for delta pos",
+            delta_positions[-1],
+            "delta vel",
+            delta_velocities[-1],
+        )
 
         # desired_velocity = prophecy[0][2]
 
@@ -48,8 +59,8 @@ class Definition(Model):
         #     result_acceleration,
         # )
 
-        if result_acceleration < 0:
-            print(self.id, "is breaking!", round(result_acceleration, 2))
+        # if result_acceleration < 0:
+        # print(self.id, "is breaking!", round(result_acceleration, 2))
 
         # boosted was removed
         return result_acceleration

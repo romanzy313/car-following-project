@@ -141,7 +141,7 @@ def train_model(
 
             # Clear some memory
             del X_batch, y_batch, y_pred
-            gc.collect()  # Force garbage collection
+            # gc.collect()  # Force garbage collection
             if device == "cuda":
                 torch.cuda.empty_cache()  # Clear cache if on GPU
 
@@ -169,7 +169,9 @@ def run_training(
     device = (
         ("cuda" if torch.cuda.is_available() else "cpu") if device == "auto" else device
     )
-    tqdm.write(f"[{dataset}_{cluster_idx}] using device {device}")
+    tqdm.write(
+        f"[{dataset}_{cluster_idx}] using device {device} and {num_workers} workers"
+    )
     # for j in tqdm(range(10), desc="j", colour='red'):
     # time.sleep(0.5)
     # for cluster, cluster_df in clustered_dataframes.items():
@@ -189,14 +191,24 @@ def run_training(
     # X_test_tensor = X_test_tensor.to(device)
     # y_test_tensor = y_test_tensor.to(device)
     # Create a DataLoader for batching
-    train_dataset = TensorDataset(X_train_tensor, y_train_tensor)
+    train_dataset = TensorDataset(
+        X_train_tensor,
+        y_train_tensor,
+    )
     # Use num_workers and pin_memory for faster data loading
     train_dataloader = DataLoader(
         train_dataset,
+
         batch_size=256,
         shuffle=False,
+
         num_workers=num_workers,  # or more, depending on your CPU and data
-        pin_memory=True,  # helps with faster data transfer to GPU
+        pin_memory=True,
+        persistent_workers=True
+        # pin_memory=False
+        # pin_memory=True
+        # if device == "cuda"
+        # else False,  # helps with faster data transfer to GPU
     )
 
     model = Seq2Seq(
@@ -240,7 +252,7 @@ def find_all_clusters():
     result = []
 
     for path in all_datasets:
-        match = re.match(r".*?/([AH]+)_([0-9]+)\.zarr", path)
+        match = re.match(r".*?/([AH|HA|HH]+)_([0-9]+)\.zarr", path)
         if match:
             dataset_name, cluster = match.groups()
             cluster = int(cluster)
@@ -274,7 +286,7 @@ cluster_dir = "../out_cluster"
 brain_dir = "../out_brain"
 n_steps_in = 30
 n_steps_out = 10
-epochs = 100
+epochs = 30
 lr = 0.01
 device = "auto"
 num_workers = multiprocessing.cpu_count()
@@ -282,8 +294,9 @@ num_workers = multiprocessing.cpu_count()
 # set the dataset and mode
 if __name__ == "__main__":
     datas = find_all_clusters()
+    print("running clustering on following datasets:", datas)
     os.makedirs(brain_dir, exist_ok=True)
-    for v in tqdm(datas, position=0, leave=False, desc="per cluster", colour="green"):
+    for v in tqdm(datas, position=0, leave=False, desc=" cluster", colour="green"):
         dataset = v["dataset"]
         cluster_idx = v["cluster"]
         file = v["file"]

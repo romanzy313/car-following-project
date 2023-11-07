@@ -163,6 +163,7 @@ def run_training(
         shuffle=False,
         num_workers=8,  # or more, depending on your CPU and data
         pin_memory=True,  # helps with faster data transfer to GPU
+        persistent_workers=True,
     )
 
     model = Seq2Seq(
@@ -212,7 +213,9 @@ def find_all_clusters():
     result = []
 
     for path in all_datasets:
-        match = re.match(r".*?/([HA]+)_([0-9]+)\.zarr", path)
+
+        match = re.match(r".*?/([AH|HA|HH]+)_([0-9]+)\.zarr", path)
+
         if match:
             dataset_name, cluster = match.groups()
             cluster = int(cluster)
@@ -300,7 +303,7 @@ cluster_dir = "../out_cluster"
 brain_dir = "../out_brain"
 n_steps_in = 30
 n_steps_out = 10
-epochs = 100
+epochs = 1
 lr = 0.01
 device = "auto"
 num_workers = multiprocessing.cpu_count()

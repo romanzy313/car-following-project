@@ -83,3 +83,13 @@ Test_change
 - use 10 steps during runtime, learn with 10 steps aswell
 
 - we give AI delta_velocity, delta_position, initial_velocity. The output is (delta_velocity, delta_position, initial_velocity)
+
+# PYPY SETUP
+
+get BLAS for numpy
+
+`sudo apt-get install libblas-dev liblapack-dev`
+`sudo apt-get install gfortran`
+
+`pypy3 -m pip install numpy pandas zarr tqdm`
+`pypy3 -m pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/nightly/cu117`

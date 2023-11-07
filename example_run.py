@@ -6,7 +6,7 @@ from src.vehicle import Vehicle
 
 def main():
     dt = 0.1
-    max_iterations = 2000
+    max_iterations = 800
     vehicle = Vehicle(length=1, max_acceleration=1, max_deceleration=1, max_velocity=30)
 
     scene = make_equadistent_scene(
@@ -14,14 +14,14 @@ def main():
         model_name="ModelV1",
         model_args={
             "model_type": "H",
-            "data_file": "./src/HAmodel_scaler_cluster_1.0.pth",
+            "data_file": "./out_brain_30_epoch/AH_0.pth",
         },
         # model_args={"model_type": "H", "data_file": "./src/model_scaler_cluster_1.pth"},
         vehicle=vehicle,
         road_length=200,
-        vehicle_count=10,
-        initial_velocity=10,
-        fuzzy_position=0.5,
+        vehicle_count=6,
+        initial_velocity=15,
+        fuzzy_position=10,
         max_iterations=max_iterations,
     )
 
