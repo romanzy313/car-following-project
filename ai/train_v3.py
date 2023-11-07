@@ -18,6 +18,7 @@ from torch.utils.data import DataLoader, TensorDataset, Dataset
 from glob import glob
 import re
 from torch.optim.lr_scheduler import ReduceLROnPlateau
+from Split_dataloader import create_dataloader
 
 
 def train_model(
@@ -101,8 +102,8 @@ def train_model(
 
 
 def run_training(
-    train_seq,
-    val_seq,
+    train_dataloader,
+    eval_dataloader,
     scaler,
     dataset,
     cluster_idx,
@@ -110,10 +111,9 @@ def run_training(
     epochs,
     lr,
     device,
-    num_workers,
 ):
     """
-    Autodevice will try to use cuda if possible, otherwise uses what is specified
+    Autodevice will try to use cuda if possible, otherwise uses wtH is specified
     """
     # print("device specified", device)
     device = (
@@ -123,28 +123,8 @@ def run_training(
     # for j in tqdm(range(10), desc="j", colour='red'):
     # time.sleep(0.5)
     # for cluster, cluster_df in clustered_dataframes.items():
-    if train_seq.__len__() == 0:
+    if train_dataloader.__len__() == 0:
         raise Exception(f"Cluster {dataset}_{cluster_idx} is empty.")
-
-    # Create a DataLoader for batching
-
-    # Use num_workers and pin_memory for faster data loading
-    train_dataloader = DataLoader(
-        dataset=train_seq,  # type: ignore
-        batch_size=128,
-        shuffle=False,
-        num_workers=8,  # or more, depending on your CPU and data
-        pin_memory=True,  # helps with faster data transfer to GPU
-        persistent_workers=True,
-    )
-
-    eval_dataloader = DataLoader(
-        dataset=val_seq,  # type: ignore
-        batch_size=128,
-        shuffle=False,
-        num_workers=8,  # or more, depending on your CPU and data
-        pin_memory=True,  # helps with faster data transfer to GPU
-    )
 
     model = Seq2Seq(
         input_size=3,
@@ -227,26 +207,6 @@ def find_all_clusters():
     # for i in tqdm(datasets, position=0, leave=False, desc="i", colour="green"):
 
 
-class MyCustomDataset(Dataset):
-    def __init__(self, data_list):
-        self.data_list = data_list
-        # 假设所有数据点形状相同，取第一个数据点的形状
-        self._shape = torch.tensor(data_list[0], dtype=torch.float32).shape
-
-    def __len__(self):
-        return len(self.data_list)
-
-    def __getitem__(self, idx):
-        # 假设我们只返回数据，没有标签
-        data = self.data_list[idx]
-        return torch.tensor(data, dtype=torch.float32)
-
-    @property
-    def shape(self):
-        # 返回数据集中每个项的形状以及总项数
-        return (self.__len__(),) + self._shape
-
-
 def preprocess_data(df):
     scaler = StandardScaler()
 
@@ -257,37 +217,26 @@ def preprocess_data(df):
     return (train_df, val_df, scaler)
 
 
-def create_sequences(data):
-    data_points = []
-    for start in range(0, len(data), 40):
-        # 保证不越界
-        end = start + 40
-        if end <= len(data):
-            data_point = data.iloc[start:end].values  # type: ignore # 将 DataFrame 转换成 NumPy 数组
-            data_points.append(data_point)
-    return data_points
+def train_cluster(dataset: str, cluster_idx: int, train_dataloader, eval_dataloader):
+    # train_data = read_clustered_data(file)
+    # train_df, val_df, scaler = preprocess_data(train_data)
 
+    # train_seq = create_sequences(train_df)
+    # val_seq = create_sequences(val_df)
 
-def train_cluster(dataset: str, cluster_idx: int, file: str):
-    train_data = read_clustered_data(file)
-    train_df, val_df, scaler = preprocess_data(train_data)
+    # train_seq = MyCustomDataset(train_seq)
+    # val_seq = MyCustomDataset(val_seq)
 
-    train_seq = create_sequences(train_df)
-    val_seq = create_sequences(val_df)
+    # # sequenced_dataset = MyCustomDataset(data_points)
+    # print(type(train_seq))
+    # print(f"This is the shape after sequenced", train_seq.__len__())
 
-    train_seq = MyCustomDataset(train_seq)
-    val_seq = MyCustomDataset(val_seq)
-
-    # sequenced_dataset = MyCustomDataset(data_points)
-    print(type(train_seq))
-    print(f"This is the shape after sequenced", train_seq.__len__())
-
-    tqdm.write(f"[{dataset}_{cluster_idx}] Dataset size {train_seq.__len__()}")
+    # tqdm.write(f"[{dataset}_{cluster_idx}] Dataset size {train_seq.__len__()}")
 
     # train_data = train_data.sample(frac=0.01, random_state=1)
     run_training(
-        train_seq=train_seq,
-        val_seq=val_seq,
+        train_dataloader=train_dataloader,
+        eval_dataloader=eval_dataloader,
         scaler=scaler,  # type: ignore
         dataset=dataset,
         cluster_idx=cluster_idx,
@@ -313,10 +262,12 @@ num_workers = multiprocessing.cpu_count() / 2
 # set the dataset and mode
 if __name__ == "__main__":
     # datas = find_all_clusters()
-    datas = [{"dataset": "HA", "cluster": 0, "file": "../out_cluster/AH_0.zarr"}]
+    datas = [{"dataset": "AH", "cluster": 0, "file": "../out_cluster/AH_0.zarr"}]
+    train_dataloader, eval_dataloader = create_dataloader("AH", "train")
+
     os.makedirs(brain_dir, exist_ok=True)
     for v in tqdm(datas, position=0, leave=False, desc="per cluster", colour="green"):
         dataset = v["dataset"]
         cluster_idx = v["cluster"]
         file = v["file"]
-        train_cluster(dataset, cluster_idx, file)
+        train_cluster(dataset, cluster_idx, train_dataloader, eval_dataloader)
