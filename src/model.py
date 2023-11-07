@@ -107,7 +107,7 @@ class Model:
 
         if True in (t < 0 for t in delta_positions):
             print(
-                f"[{self.name}] LAST Negative delta position detected!!!",
+                f"[{self.name}] CRITICAL WARNING LAST Negative delta position detected!!!",
                 delta_positions,
             )
 
@@ -146,7 +146,7 @@ class Model:
         )
         # print(self.id, "distance with next", distance)
         if distance <= 0:
-            print(f"NEXT Vehicle {self.id} collided with {next.id}")
+            # print(f"NEXT Vehicle {self.id} collided with {next.id}")
             return True
 
         return False

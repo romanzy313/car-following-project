@@ -198,7 +198,10 @@ class Scene:
         def add_ttc(delta_positions, delta_velocities):
             if delta_velocities[-1] != 0:
                 ttc = delta_positions[-1] / delta_velocities[-1]
-                self.stat_ttc.append(ttc)
+                # extra checks to avoid blowing it out
+                # Yiru said this is ok
+                if ttc > 0 and ttc < 10:
+                    self.stat_ttc.append(ttc)
 
         for model in self.models:
             self.stat_velocity.append(model.velocities[-1])
