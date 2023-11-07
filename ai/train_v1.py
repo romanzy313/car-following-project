@@ -1,5 +1,6 @@
 # %%
 import numpy as np
+from pandas import DataFrame
 from Sec2SecRuntime import Seq2Seq
 from read_data import read_clustered_data
 import multiprocessing
@@ -22,25 +23,30 @@ def evaluate_model(
     dataset,
     cluster_idx,
     model,
-    X_test_tensor,
-    y_test_tensor,
     scaler,
     device,
-    batch_size=1024,
+    eval_dataloader,
 ):
     # Move the model to the specified device
     model = model.to(device)
 
     # Create a DataLoader for the test data
-    test_dataset = TensorDataset(X_test_tensor, y_test_tensor)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+    # test_dataset = TensorDataset(X_test_tensor, y_test_tensor)
+    test_loader = eval_dataloader
 
     model.eval()
     y_pred_list = []
     y_test_list = []
 
     with torch.no_grad():
-        for X_batch, y_batch in test_loader:
+        for eval_data in test_loader:
+            """
+            data is a array which shape is (batch_size*n_steps_in = 40 * features = 3)
+            """
+
+            X_batch = eval_data[:, :30, :]  # 形状为 [256, 30, 3]
+            y_batch = eval_data[:, -10:, :]  # 形状为 [256, 10, 3]
+
             # Move the tensors to the same device as the model
             X_batch = X_batch.to(device)
             y_batch = y_batch.to(device)
@@ -92,13 +98,15 @@ def train_model(
             """
             data is a array which shape is (batch_size*n_steps_in = 40 * features = 3)
             """
+
+            print(data)
             optimizer.zero_grad()  # Reset gradients tensors
 
             input_seq = data[:, :30, :]  # 形状为 [256, 30, 3]
             ground_truth = data[:, -10:, :]  # 形状为 [256, 10, 3]
 
-            # 将输入序列传递给模型
-            output_seq = model(input_seq)  # 模型输出形状应该是 [256, 10, 3]
+            # pass to the model
+            output_seq = model(input_seq)  # model output should be [256, 10, 3]
 
             # 计算损失，即模型输出和 ground truth 的 MSE
             loss = loss_function(output_seq, ground_truth)
@@ -106,7 +114,13 @@ def train_model(
             # 反向传播和优化
 
             loss.backward()  # 反向传播计算梯度
-            optimizer.step()  # 更新模型参数
+            optimizer.step()
+            # if (i + 1) % accumulation_steps == 0 or i + 1 == len(dataloader):
+            #     optimizer.step()  # Perform a single optimization step
+            #     # optimizer.zero_grad()  # Reset gradients tensors
+
+            # Clear some memory
+            gc.collect()  # Force garbage collection
         # 每个epoch更新loss值，或者说监控模型性能的功能
         if epoch % 10 == 0:
             tqdm.write(
@@ -115,10 +129,11 @@ def train_model(
 
 
 def run_training(
-    sequenced_dataset,
+    train_seq,
+    val_seq,
+    scaler,
     dataset,
     cluster_idx,
-    n_steps_in,
     n_steps_out,
     epochs,
     lr,
@@ -136,20 +151,19 @@ def run_training(
     # for j in tqdm(range(10), desc="j", colour='red'):
     # time.sleep(0.5)
     # for cluster, cluster_df in clustered_dataframes.items():
-    if sequenced_dataset.__len__() == 0:
+    if train_seq.__len__() == 0:
         raise Exception(f"Cluster {dataset}_{cluster_idx} is empty.")
 
     # Create a DataLoader for batching
 
-    train_dataset, scaler = preprocess_data(sequenced_dataset)
-
     # Use num_workers and pin_memory for faster data loading
     train_dataloader = DataLoader(
-        train_dataset,  # type: ignore
-        batch_size=256,
+        dataset=train_seq,  # type: ignore
+        batch_size=64,
         shuffle=False,
-        num_workers=num_workers,  # or more, depending on your CPU and data
+        num_workers=8,  # or more, depending on your CPU and data
         pin_memory=True,  # helps with faster data transfer to GPU
+        persistent_workers=True,
     )
 
     model = Seq2Seq(
@@ -178,10 +192,16 @@ def run_training(
         {"model_state_dict": model.state_dict(), "scaler": scaler},
         file_location,
     )
-    evaluate_model(
-        dataset, cluster_idx, model, X_test_tensor, y_test_tensor, scaler, device
-    )
 
+    eval_dataloader = DataLoader(
+        dataset=val_seq,  # type: ignore
+        batch_size=64,
+        shuffle=False,
+        num_workers=8,  # or more, depending on your CPU and data
+        pin_memory=True,  # helps with faster data transfer to GPU
+    )
+    evaluate_model(dataset, cluster_idx, model, scaler, device, eval_dataloader)
+    # type: ignore
     models_scalers = (model, scaler)
 
     return models_scalers
@@ -193,7 +213,9 @@ def find_all_clusters():
     result = []
 
     for path in all_datasets:
+
         match = re.match(r".*?/([AH|HA|HH]+)_([0-9]+)\.zarr", path)
+
         if match:
             dataset_name, cluster = match.groups()
             cluster = int(cluster)
@@ -207,6 +229,8 @@ def find_all_clusters():
 class MyCustomDataset(Dataset):
     def __init__(self, data_list):
         self.data_list = data_list
+        # 假设所有数据点形状相同，取第一个数据点的形状
+        self._shape = torch.tensor(data_list[0], dtype=torch.float32).shape
 
     def __len__(self):
         return len(self.data_list)
@@ -216,46 +240,56 @@ class MyCustomDataset(Dataset):
         data = self.data_list[idx]
         return torch.tensor(data, dtype=torch.float32)
 
+    @property
+    def shape(self):
+        # 返回数据集中每个项的形状以及总项数
+        return (self.__len__(),) + self._shape
+
 
 def preprocess_data(df):
     scaler = StandardScaler()
+
     data_normalized = scaler.fit_transform(df)
+    train_df, val_df = train_test_split(data_normalized, test_size=0.2, random_state=42)
+    train_df = DataFrame(train_df)
+    val_df = DataFrame(val_df)
+    return (train_df, val_df, scaler)
 
-    return (data_normalized, scaler)
 
-
-def create_sequences(data, n_steps_in, n_steps_out):
-    X, y = [], []
-    for i in range(0, len(data) - n_steps_in - n_steps_out + 5):
-        seq_x = data[i : i + n_steps_in]
-        seq_y = data[i + n_steps_in : i + n_steps_in + n_steps_out]
-        if seq_x.shape[0] == n_steps_in and seq_y.shape[0] == n_steps_out:
-            X.append(seq_x)
-            y.append(seq_y)
-    return np.array(X), np.array(y)
+def create_sequences(data):
+    data_points = []
+    for start in range(0, len(data), 40):
+        # 保证不越界
+        end = start + 40
+        if end <= len(data):
+            data_point = data.iloc[start:end].values  # type: ignore # 将 DataFrame 转换成 NumPy 数组
+            data_points.append(data_point)
+    return data_points
 
 
 def train_cluster(dataset: str, cluster_idx: int, file: str):
     train_data = read_clustered_data(file)
-    data_points = []
-    for start in range(0, len(train_data), 40):
-        # 保证不越界
-        end = start + 40
-        if end <= len(train_data):
-            data_point = train_data.iloc[start:end].values  # 将 DataFrame 转换成 NumPy 数组
-            data_points.append(data_point)
-    sequenced_dataset = MyCustomDataset(data_points)
-    print(type(sequenced_dataset))
-    print(f"This is the shape after sequenced", sequenced_dataset.__len__())
+    train_df, val_df, scaler = preprocess_data(train_data)
 
-    tqdm.write(f"[{dataset}_{cluster_idx}] Dataset size {sequenced_dataset.__len__()}")
+    train_seq = create_sequences(train_df)
+    val_seq = create_sequences(val_df)
+
+    train_seq = MyCustomDataset(train_seq)
+    val_seq = MyCustomDataset(val_seq)
+
+    # sequenced_dataset = MyCustomDataset(data_points)
+    print(type(train_seq))
+    print(f"This is the shape after sequenced", train_seq.__len__())
+
+    tqdm.write(f"[{dataset}_{cluster_idx}] Dataset size {train_seq.__len__()}")
 
     # train_data = train_data.sample(frac=0.01, random_state=1)
     run_training(
-        sequenced_dataset=sequenced_dataset,  # type: ignore
+        train_seq=train_seq,
+        val_seq=val_seq,
+        scaler=scaler,  # type: ignore
         dataset=dataset,
         cluster_idx=cluster_idx,
-        n_steps_in=n_steps_in,
         n_steps_out=n_steps_out,
         epochs=epochs,
         lr=lr,
@@ -269,14 +303,15 @@ cluster_dir = "../out_cluster"
 brain_dir = "../out_brain"
 n_steps_in = 30
 n_steps_out = 10
-epochs = 100
+epochs = 1
 lr = 0.01
 device = "auto"
 num_workers = multiprocessing.cpu_count()
 
 # set the dataset and mode
 if __name__ == "__main__":
-    datas = find_all_clusters()
+    # datas = find_all_clusters()
+    datas = [{"dataset": "AH", "cluster": 0, "file": "./out_cluster/AH_0.zarr"}]
     os.makedirs(brain_dir, exist_ok=True)
     for v in tqdm(datas, position=0, leave=False, desc="per cluster", colour="green"):
         dataset = v["dataset"]

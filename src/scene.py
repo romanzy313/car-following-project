@@ -170,6 +170,9 @@ class Scene:
             self.models[0], self.road_length
         )
         accelerations.append(last_acc)
+
+        # print("ticking accelerations", accelerations)
+
         # step 3
         for i in range(0, len(self.models)):
             self.models[i].apply_acceleration(accelerations[i])
