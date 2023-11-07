@@ -8,3 +8,4 @@ test_results/*.json
 out_cluster/**
 
 super_data
+out_segmented

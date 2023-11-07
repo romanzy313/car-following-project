@@ -255,6 +255,7 @@ def get_clustered_df(features):
     # Find the optimal number of clusters
     optimal_clusters = find_optimal_clusters(pca_data)
 
+    print("found optimal number of clusters to be", optimal_clusters)
     # Perform clustering with the optimal number of clusters
     labels = perform_clustering(pca_data, optimal_clusters)
     features_numeric["cluster"] = labels
@@ -281,8 +282,6 @@ def train_df(dataset: str, clustered_data: pd.DataFrame, mode: str):
     data = pd.merge(
         data, clustered_data[["case_id", "cluster"]], on="case_id", how="left"
     )
-    data = data[["delta_position", "delta_velocity", "v_follower", "cluster"]]
-    # print(data.head())
     return data
 
 
@@ -316,28 +315,30 @@ def cluster_and_save(dataset: str):
         group_df = group_df.drop(
             columns=["cluster"]
         )  # this is the data that goes to the post proccess function
+
+        segment_data_and_save(group_df, dataset, int(str(cluster_value)[0]))
         # Define the filename for the CSV file
-        file_name = f"{out_dir}/{dataset}_{str(cluster_value)[0]}.zarr"  # type: ignore
-        print("saving cluster result to", file_name)
-        # print(group_df)
-        zarr.save(file_name, group_df)
+        # file_name = f"{out_dir}/{dataset}_{str(cluster_value)[0]}.zarr"  # type: ignore
+        # print("saving cluster result to", file_name)
+        # # print(group_df)
+        # zarr.save(file_name, group_df)
 
 
 # %% now cluster other datasets and save them
 os.makedirs(out_dir, exist_ok=True)
-# save_AH_without_clustering()
+save_AH_without_clustering()
+cluster_and_save("HA")
+cluster_and_save("HH")
+# scaler = get_scaler("AH", 0)
 
-scaler = get_scaler("AH", 0)
+# print(scaler.mean_)
 
-print(scaler.mean_)
+# dataset = get_train_data("AH", 0, "features")
 
-dataset = get_train_data("AH", 0, "features")
-
-print(dataset)
+# print(dataset)
 
 # datasets = ["HA", "HH"]
 # for dataset in datasets:
-#     cluster_and_save(dataset)
 
 
 # %%
