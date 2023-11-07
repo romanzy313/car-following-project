@@ -198,9 +198,10 @@ def run_training(
     # Use num_workers and pin_memory for faster data loading
     train_dataloader = DataLoader(
         train_dataset,
-        # batch_size=256,
-        batch_size=1024,
-        shuffle=True,
+
+        batch_size=256,
+        shuffle=False,
+
         num_workers=num_workers,  # or more, depending on your CPU and data
         pin_memory=True,
         persistent_workers=True
