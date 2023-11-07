@@ -2,7 +2,6 @@
 import numpy as np
 from pandas import DataFrame
 from Sec2SecRuntime import Seq2Seq
-from read_data import read_clustered_data
 import multiprocessing
 import os
 from sklearn.preprocessing import StandardScaler
@@ -30,7 +29,6 @@ def train_model(
     optimizer,
     loss_function,
     device,
-    accumulation_steps=4,
 ):
     model.to(device)
 
@@ -111,6 +109,7 @@ def run_training(
     epochs,
     lr,
     device,
+    num_workers,
 ):
     """
     Autodevice will try to use cuda if possible, otherwise uses wtH is specified
@@ -205,16 +204,6 @@ def find_all_clusters():
     return result
     # extract names from it too
     # for i in tqdm(datasets, position=0, leave=False, desc="i", colour="green"):
-
-
-def preprocess_data(df):
-    scaler = StandardScaler()
-
-    data_normalized = scaler.fit_transform(df)
-    train_df, val_df = train_test_split(data_normalized, test_size=0.2, random_state=42)
-    train_df = DataFrame(train_df)
-    val_df = DataFrame(val_df)
-    return (train_df, val_df, scaler)
 
 
 def train_cluster(dataset: str, cluster_idx: int, train_dataloader, eval_dataloader):
