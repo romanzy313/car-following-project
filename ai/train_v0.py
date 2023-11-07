@@ -129,11 +129,9 @@ def train_model(
             )  # Normalize our loss
 
             loss.backward()
-            optimizer.step()
-            # if (i + 1) % accumulation_steps == 0 or i + 1 == len(dataloader):
-            #     optimizer.step()  # Perform a single optimization step
-            #     optimizer.zero_grad()  # Reset gradients tensors
-
+            if (i + 1) % accumulation_steps == 0 or i + 1 == len(dataloader):
+                optimizer.step()  # Perform a single optimization step
+                optimizer.zero_grad()  # Reset gradients tensors
         if epoch % 10 == 0:
             tqdm.write(
                 f"[{dataset}_{cluster_idx}] Epoch: {epoch} Loss: {loss.item() * accumulation_steps:.4f}"  # type: ignore
