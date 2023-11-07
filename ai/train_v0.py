@@ -94,7 +94,7 @@ def evaluate_model(
 
     # Calculate metrics
     mse = mean_squared_error(y_test_original[:, 0, :], y_pred_original[:, 0, :])
-    rmse = math.sqrt(mse) # type: ignore
+    rmse = math.sqrt(mse)  # type: ignore
     mae = mean_absolute_error(y_test_original[:, 0, :], y_pred_original[:, 0, :])
 
     tqdm.write(
@@ -147,7 +147,7 @@ def train_model(
 
         if epoch % 10 == 0:
             tqdm.write(
-                f"[{dataset}_{cluster_idx}] Epoch: {epoch} Loss: {loss.item() * accumulation_steps:.4f}" # type: ignore
+                f"[{dataset}_{cluster_idx}] Epoch: {epoch} Loss: {loss.item() * accumulation_steps:.4f}"  # type: ignore
             )  # Adjust the loss value
 
 
@@ -194,7 +194,7 @@ def run_training(
     train_dataloader = DataLoader(
         train_dataset,
         batch_size=256,
-        shuffle=True,
+        shuffle=False,
         num_workers=num_workers,  # or more, depending on your CPU and data
         pin_memory=True,  # helps with faster data transfer to GPU
     )
@@ -250,10 +250,11 @@ def find_all_clusters():
     # extract names from it too
     # for i in tqdm(datasets, position=0, leave=False, desc="i", colour="green"):
 
+
 def train_cluster(dataset: str, cluster_idx: int, file: str):
     train_data = read_clustered_data(file)
     tqdm.write(f"[{dataset}_{cluster_idx}] Dataset size {train_data.shape}")
-    
+
     # train_data = train_data.sample(frac=0.01, random_state=1)
     run_training(
         cluster_df=train_data,
@@ -266,6 +267,7 @@ def train_cluster(dataset: str, cluster_idx: int, file: str):
         device=device,
         num_workers=num_workers,
     )
+
 
 # Global settings are here
 cluster_dir = "../out_cluster"
