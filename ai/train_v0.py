@@ -292,7 +292,8 @@ num_workers = multiprocessing.cpu_count()
 
 # set the dataset and mode
 if __name__ == "__main__":
-    datas = find_all_clusters()
+    # datas = find_all_clusters()
+    datas = [{"dataset": "AH", "cluster": 0, "file": "../out_cluster/AH_0.zarr"}]
     print("running clustering on following datasets:", datas)
     os.makedirs(brain_dir, exist_ok=True)
     for v in tqdm(datas, position=0, leave=False, desc=" cluster", colour="green"):
