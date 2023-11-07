@@ -4,15 +4,23 @@ import pickle
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
-from read_data import get_scaler, get_train_data, read_data
+from read_data import read_data
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.metrics import silhouette_score
 import matplotlib.pyplot as plt
-import zarr
 
 out_dir = "../out_segmented"
+
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-p", "--plot", dest="plot", action=argparse.BooleanOptionalAction)
+parser.set_defaults(plot=False)
+args = parser.parse_args()
+
+plot = args.plot
 
 
 def segment_data_and_save(data, dataset, cluster):
@@ -24,7 +32,7 @@ def segment_data_and_save(data, dataset, cluster):
     labels = []
     idx = 0
     tqdm.write(f"segmenting data {dataset}_{cluster}")
-    for case_id in tqdm(data.index.unique()):
+    for case_id in tqdm(data.index.unique(), desc=f"segmenting"):
         df = data.loc[case_id]
         future_idx_end = np.arange(
             40, len(df), 40
@@ -209,17 +217,17 @@ def plot_clusters(features, labels, pca_data=None):
     plt.show()
 
 
-def find_optimal_clusters(data, max_clusters=5, silent=True):
+def find_optimal_clusters(data, max_clusters=5):
     """Determine the optimal cluster count using silhouette score and elbow method."""
     inertia_list = []
     silhouette_scores = []
-    for n_clusters in range(2, max_clusters + 1):
+    for n_clusters in tqdm(range(2, max_clusters + 1), desc="clustering"):
         kmeans = KMeans(n_clusters=n_clusters, random_state=RANDOM_STATE, n_init="auto")
         labels = kmeans.fit_predict(data)
         inertia_list.append(kmeans.inertia_)
         silhouette_scores.append(silhouette_score(data, labels))
 
-    if not silent:
+    if plot:
         # Elbow Method Plot
         plt.figure(figsize=(10, 5))
         plt.subplot(1, 2, 1)
@@ -261,7 +269,8 @@ def get_clustered_df(features):
     features_numeric["cluster"] = labels
 
     # Plot the results
-    plot_clusters(features_numeric, labels, pca_data)
+    if plot:
+        plot_clusters(normalized_data, labels, pca_data)
 
     # Compute and display the average silhouette score
     silhouette_avg = silhouette_score(pca_data, labels)
@@ -290,16 +299,6 @@ def save_AH_without_clustering():
     data = read_data("AH", "train")
 
     segment_data_and_save(data, "AH", 0)
-    # data["delta_position"] = data["x_leader"] - data["x_follower"]
-    # data["delta_velocity"] = data["v_follower"] - data["v_leader"]
-    # runtime_data = data[["delta_position", "delta_velocity", "v_follower"]]
-
-    # print("runtime data is", runtime_data)
-
-    # file_name = f"{out_dir}/AH_0.h5"
-    # print("saving AH dataset to", file_name)
-    # # zarr.save(file_name, runtime_data)
-    # data.to_hdf(file_name, key="data")
 
 
 def cluster_and_save(dataset: str):
@@ -311,17 +310,7 @@ def cluster_and_save(dataset: str):
     grouped = runtime_data.groupby("cluster")
 
     for cluster_value, group_df in grouped:
-        # Drop the 'cluster' column
-        group_df = group_df.drop(
-            columns=["cluster"]
-        )  # this is the data that goes to the post proccess function
-
         segment_data_and_save(group_df, dataset, int(str(cluster_value)[0]))
-        # Define the filename for the CSV file
-        # file_name = f"{out_dir}/{dataset}_{str(cluster_value)[0]}.zarr"  # type: ignore
-        # print("saving cluster result to", file_name)
-        # # print(group_df)
-        # zarr.save(file_name, group_df)
 
 
 # %% now cluster other datasets and save them
@@ -329,16 +318,3 @@ os.makedirs(out_dir, exist_ok=True)
 save_AH_without_clustering()
 cluster_and_save("HA")
 cluster_and_save("HH")
-# scaler = get_scaler("AH", 0)
-
-# print(scaler.mean_)
-
-# dataset = get_train_data("AH", 0, "features")
-
-# print(dataset)
-
-# datasets = ["HA", "HH"]
-# for dataset in datasets:
-
-
-# %%
