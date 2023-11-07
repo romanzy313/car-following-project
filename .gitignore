@@ -6,3 +6,6 @@ __pycache__
 results/test_*.json
 test_results/*.json
 out_cluster/**
+
+super_data
+out_segmented

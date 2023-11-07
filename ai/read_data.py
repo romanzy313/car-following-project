@@ -1,21 +1,46 @@
 from pathlib import Path
+import pickle
 from typing import Any
 import numpy as np
 import pandas as pd
 import zarr
 
+from sklearn.preprocessing import StandardScaler
 
-def read_clustered_data(data_file: str):
-    raw_data = zarr.open(data_file, mode="r")
-    data = pd.DataFrame(
-        # raw_data
-        {
-            "delta_velocity": raw_data[:, 0],
-            "delta_position": raw_data[:, 1],
-            "v_follower": raw_data[:, 2],
-        }
-    )
-    return data
+
+def get_scaler(
+    dataset: str, cluster: int, root_path: str = "../out_segmented"
+) -> StandardScaler:
+    with open(f"{root_path}/{dataset}_{cluster}_scaler.pkl", "rb") as f:
+        sc = pickle.load(f)
+        return sc
+
+
+def get_train_data(
+    dataset: str,
+    cluster: int,
+    type: str = "features",
+    root_path: str = "../out_segmented",
+):
+    """
+    type is either features or labels
+    """
+    path = f"{root_path}/{dataset}_{cluster}_{type}.h5"
+
+    return pd.read_hdf(path, key=type)
+
+
+# def read_clustered_data(data_file: str):
+#     raw_data = zarr.open(data_file, mode="r")
+#     data = pd.DataFrame(
+#         # raw_data
+#         {
+#             "delta_velocity": raw_data[:, 0],
+#             "delta_position": raw_data[:, 1],
+#             "v_follower": raw_data[:, 2],
+#         }
+#     )
+#     return data
 
 
 def read_data(cfpair, dataset, root_folder="../data/"):
