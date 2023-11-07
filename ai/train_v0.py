@@ -94,7 +94,7 @@ def evaluate_model(
 
     # Calculate metrics
     mse = mean_squared_error(y_test_original[:, 0, :], y_pred_original[:, 0, :])
-    rmse = math.sqrt(mse) # type: ignore
+    rmse = math.sqrt(mse)  # type: ignore
     mae = mean_absolute_error(y_test_original[:, 0, :], y_pred_original[:, 0, :])
 
     tqdm.write(
@@ -141,13 +141,13 @@ def train_model(
 
             # Clear some memory
             del X_batch, y_batch, y_pred
-            gc.collect()  # Force garbage collection
+            # gc.collect()  # Force garbage collection
             if device == "cuda":
                 torch.cuda.empty_cache()  # Clear cache if on GPU
 
         if epoch % 10 == 0:
             tqdm.write(
-                f"[{dataset}_{cluster_idx}] Epoch: {epoch} Loss: {loss.item() * accumulation_steps:.4f}" # type: ignore
+                f"[{dataset}_{cluster_idx}] Epoch: {epoch} Loss: {loss.item() * accumulation_steps:.4f}"  # type: ignore
             )  # Adjust the loss value
 
 
@@ -169,7 +169,9 @@ def run_training(
     device = (
         ("cuda" if torch.cuda.is_available() else "cpu") if device == "auto" else device
     )
-    tqdm.write(f"[{dataset}_{cluster_idx}] using device {device}")
+    tqdm.write(
+        f"[{dataset}_{cluster_idx}] using device {device} and {num_workers} workers"
+    )
     # for j in tqdm(range(10), desc="j", colour='red'):
     # time.sleep(0.5)
     # for cluster, cluster_df in clustered_dataframes.items():
@@ -189,14 +191,23 @@ def run_training(
     # X_test_tensor = X_test_tensor.to(device)
     # y_test_tensor = y_test_tensor.to(device)
     # Create a DataLoader for batching
-    train_dataset = TensorDataset(X_train_tensor, y_train_tensor)
+    train_dataset = TensorDataset(
+        X_train_tensor,
+        y_train_tensor,
+    )
     # Use num_workers and pin_memory for faster data loading
     train_dataloader = DataLoader(
         train_dataset,
+        # batch_size=256,
         batch_size=256,
         shuffle=True,
         num_workers=num_workers,  # or more, depending on your CPU and data
-        pin_memory=True,  # helps with faster data transfer to GPU
+        pin_memory=True,
+        persistent_workers=True
+        # pin_memory=False
+        # pin_memory=True
+        # if device == "cuda"
+        # else False,  # helps with faster data transfer to GPU
     )
 
     model = Seq2Seq(
@@ -240,7 +251,7 @@ def find_all_clusters():
     result = []
 
     for path in all_datasets:
-        match = re.match(r".*?/([AH]+)_([0-9]+)\.zarr", path)
+        match = re.match(r".*?/([AH|HA|HH]+)_([0-9]+)\.zarr", path)
         if match:
             dataset_name, cluster = match.groups()
             cluster = int(cluster)
@@ -250,10 +261,11 @@ def find_all_clusters():
     # extract names from it too
     # for i in tqdm(datasets, position=0, leave=False, desc="i", colour="green"):
 
+
 def train_cluster(dataset: str, cluster_idx: int, file: str):
     train_data = read_clustered_data(file)
     tqdm.write(f"[{dataset}_{cluster_idx}] Dataset size {train_data.shape}")
-    
+
     # train_data = train_data.sample(frac=0.01, random_state=1)
     run_training(
         cluster_df=train_data,
@@ -267,6 +279,7 @@ def train_cluster(dataset: str, cluster_idx: int, file: str):
         num_workers=num_workers,
     )
 
+
 # Global settings are here
 cluster_dir = "../out_cluster"
 brain_dir = "../out_brain"
@@ -279,9 +292,9 @@ num_workers = multiprocessing.cpu_count()
 
 # set the dataset and mode
 if __name__ == "__main__":
-    datas = find_all_clusters()
+    datas = [{"dataset": "AH", "cluster": 0, "file": "../out_cluster/AH_0.zarr"}]
     os.makedirs(brain_dir, exist_ok=True)
-    for v in tqdm(datas, position=0, leave=False, desc="per cluster", colour="green"):
+    for v in tqdm(datas, position=0, leave=False, desc=" cluster", colour="green"):
         dataset = v["dataset"]
         cluster_idx = v["cluster"]
         file = v["file"]
