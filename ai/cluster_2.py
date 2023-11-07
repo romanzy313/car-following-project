@@ -242,7 +242,10 @@ def save_AH_without_clustering():
     data = read_data("AH", "train")
     data["delta_position"] = data["x_leader"] - data["x_follower"]
     data["delta_velocity"] = data["v_follower"] - data["v_leader"]
-    runtime_data = data[["delta_velocity", "delta_position", "v_follower"]]
+    runtime_data = data[["delta_position", "delta_velocity", "v_follower"]]
+
+    print("runtime data is", runtime_data)
+
     file_name = f"{out_dir}/AH_0.zarr"
     print("saving AH dataset to", file_name)
     zarr.save(file_name, runtime_data)

@@ -48,7 +48,6 @@ class Definition(Model):
             "delta vel",
             delta_velocities[-1],
         )
-        print()
 
         # desired_velocity = prophecy[0][2]
 

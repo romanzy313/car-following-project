@@ -93,21 +93,26 @@ class Seq2SeqRuntime:
 
         """
 
-        # print("eval df")
-        # print(eval_df)
+        print("eval df")
+        print(eval_df)
 
         data_normalized = self.scaler.transform(eval_df)
-
-        # print("data normalized")
-        # print(data_normalized)
-
+        print("data normalized")
+        print(data_normalized)
         X = []
         X.append(data_normalized)
+        X_new_tensor = torch.tensor(X, dtype=torch.float32)
+        self.model.eval()
+        with torch.no_grad():
+            y_new_pred_tensor = self.model(X_new_tensor)
+            y_new_pred = y_new_pred_tensor.numpy()
+        y_first_pred = y_new_pred[0, :, :]
+        # y_first_pred_original = self.scaler.inverse_transform(y_first_pred)
 
+        return y_first_pred
         # print(f"X_input_tensor", eval_df.shape)
         # Preprocess the data
         # X_new_tensor = self.preprocess_data_for_inference(eval_df, 10, 0)
-        X_new_tensor = torch.tensor(X, dtype=torch.float32)
         # X_new_tensor = process_runtime_data(eval_df) # Need to use something like this instead
         # print(f"X_new_tensor", X_new_tensor.shape)
         # Initialize the model based on the shape of the input data
@@ -119,20 +124,14 @@ class Seq2SeqRuntime:
         # )
 
         # Predict using the model
-        with torch.no_grad():
-            y_new_pred_tensor = self.model(X_new_tensor)
-            y_new_pred = y_new_pred_tensor.numpy()
+
         # print(f"y_new_pred_tensor",y_test_tensor.shape)
         # print(y_new_pred.shape)
 
         # Take the first prediction from the first sequence
-        y_first_pred = y_new_pred[0, :, :]
         # print(f"first predict", y_first_pred.shape)
         # print(y_first_pred)
         # Inverse transform the predictions to the original scale
-        y_first_pred_original = self.scaler.inverse_transform(y_first_pred)
-
-        return y_first_pred_original
 
         # Extract the denormalized delta_velocity values
         # delta_velocity_pred_original = y_first_pred_original[:, delta_velocity_index]
