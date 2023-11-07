@@ -20,66 +20,6 @@ import re
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 
-def evaluate_model(
-    dataset,
-    cluster_idx,
-    model,
-    scaler,
-    device,
-    eval_dataloader,
-):
-    # Move the model to the specified device
-    model = model.to(device)
-
-    # Create a DataLoader for the test data
-    # test_dataset = TensorDataset(X_test_tensor, y_test_tensor)
-    test_loader = eval_dataloader
-
-    model.eval()
-    y_pred_list = []
-    y_test_list = []
-
-    with torch.no_grad():
-        for eval_data in test_loader:
-            """
-            data is a array which shape is (batch_size*n_steps_in = 40 * features = 3)
-            """
-
-            X_batch = eval_data[:, :30, :]  # 形状为 [256, 30, 3]
-            y_batch = eval_data[:, -10:, :]  # 形状为 [256, 10, 3]
-
-            # Move the tensors to the same device as the model
-            X_batch = X_batch.to(device)
-            y_batch = y_batch.to(device)
-
-            # Predict
-            y_pred = model(X_batch)
-            # Move the predictions back to CPU
-            y_pred_list.append(y_pred.cpu())
-            y_test_list.append(y_batch.cpu())
-
-    # Concatenate all batches
-    y_pred_numpy = torch.cat(y_pred_list).numpy()
-    y_test_numpy = torch.cat(y_test_list).numpy()
-
-    # Inverse transform the predictions and true values
-    y_pred_original = scaler.inverse_transform(
-        y_pred_numpy.reshape(-1, y_pred_numpy.shape[-1])
-    ).reshape(y_pred_numpy.shape)
-    y_test_original = scaler.inverse_transform(
-        y_test_numpy.reshape(-1, y_test_numpy.shape[-1])
-    ).reshape(y_test_numpy.shape)
-
-    # Calculate metrics
-    mse = mean_squared_error(y_test_original[:, 0, :], y_pred_original[:, 0, :])
-    rmse = math.sqrt(mse)  # type: ignore
-    mae = mean_absolute_error(y_test_original[:, 0, :], y_pred_original[:, 0, :])
-
-    tqdm.write(
-        f"[{dataset}_{cluster_idx}] Evaluation. MSE: {mse:.2f}, RMSE: {rmse:.2f}, MAE: {mae:.2f}"
-    )
-
-
 def train_model(
     model,
     train_dataloader,
@@ -91,87 +31,71 @@ def train_model(
     device,
     accumulation_steps=4,
 ):
-    model.to(device)  # Ensure model is on the correct device
+    model.to(device)
 
-    # Split data into training and validation sets
+    scheduler = ReduceLROnPlateau(optimizer, mode="min", factor=0.1, patience=10)
 
-    # Define scheduler
-    scheduler = ReduceLROnPlateau(optimizer, mode="min", factor=0.1, patience=10)  # type: ignore
-
-    # Define patience for early stopping
     patience = 20
-
     best_val_loss = float("inf")
     epochs_without_improvement = 0
 
     for epoch in tqdm(
-        range(epochs), position=1, leave=False, desc="training", colour="red"  # type: ignore
+        range(epochs), position=1, leave=False, desc="Training", colour="red"
     ):
-        model.train()  # type: ignore
-        for data in train_dataloader:  # type: ignore
-            optimizer.zero_grad()  # type: ignore
+        model.train()
+        for history, future in train_dataloader:
+            optimizer.zero_grad()
 
-            input_seq = data[:, :30, :].to(device)
-            ground_truth = data[:, -10:, :].to(device)
+            # Since the data loader already separates history and future, no slicing is needed
+            input_seq = history.to(device)
+            ground_truth = future.to(device)
 
-            output_seq = model(input_seq)  # type: ignore
+            output_seq = model(input_seq)
 
             loss = loss_function(output_seq, ground_truth)
-
             loss.backward()
             optimizer.step()
 
-        # Evaluate on validation set
+        # Evaluation
         model.eval()
         val_loss = 0
         mse_errors = []
 
         with torch.no_grad():
-            for data in val_dataloader:
-                input_seq = data[:, :30, :].to(device)
-                ground_truth = data[:, -10:, :].to(device)
+            for history, future in val_dataloader:
+                input_seq = history.to(device)
+                ground_truth = future.to(device)
 
                 output_seq = model(input_seq)
 
                 val_loss += loss_function(output_seq, ground_truth).item()
 
-                ground_truth_np = ground_truth.cpu().numpy()
-                output_seq_np = output_seq.cpu().numpy()
+                # The following normalization and MSE calculation can be refactored into a function
+                # to reduce redundancy between training and validation loops.
+                mse_error = calculate_denormalized_mse(output_seq, ground_truth, scaler)
 
-                # Reshape to 2D array
-                ground_truth_2d = ground_truth_np.reshape(-1, ground_truth_np.shape[-1])
-                output_seq_2d = output_seq_np.reshape(-1, output_seq_np.shape[-1])
-                # Reverse normalization
-                ground_truth_denorm = scaler.inverse_transform(ground_truth_2d)
-                output_seq_denorm = scaler.inverse_transform(output_seq_2d)
-
-                # Reshape back to original shape
-                ground_truth_denorm = ground_truth_denorm.reshape(ground_truth_np.shape)
-                output_seq_denorm = output_seq_denorm.reshape(output_seq_np.shape)
-
-                # Reshape to 1D array
-                ground_truth_1d = ground_truth_denorm.reshape(-1)
-                output_seq_1d = output_seq_denorm.reshape(-1)
-
-                # Calculate MSE error
-                mse_error = mean_squared_error(ground_truth_1d, output_seq_1d)
+                # Calculate MSE error and append to list
                 mse_errors.append(mse_error)
 
+        # Compute average losses
         val_loss /= len(val_dataloader)
         avg_mse_error = sum(mse_errors) / len(mse_errors)
-        # Check for early stopping
+
+        # Early stopping check
         if val_loss < best_val_loss:
             best_val_loss = val_loss
             epochs_without_improvement = 0
         else:
             epochs_without_improvement += 1
-            if epochs_without_improvement == patience:
+            if epochs_without_improvement >= patience:
+                print("Early stopping triggered")
                 break
 
-        # # Update learning rate
+        # Update learning rate
         scheduler.step(val_loss)
 
-        tqdm.write(
+        # Print epoch stats
+        print(
             f"[{dataset}_{cluster_idx}] Epoch: {epoch} Loss: {loss.item():.4f} Val Loss: {val_loss:.4f} Avg MSE: {avg_mse_error:.4f}"
         )
 
@@ -256,6 +180,33 @@ def run_training(
     models_scalers = (model, scaler)
 
     return models_scalers
+
+
+def calculate_denormalized_mse(output, target, scaler):
+    """
+    Calculate the Mean Squared Error (MSE) between the model's outputs and the ground truth
+    after denormalizing the data.
+
+    Parameters:
+    - output: the output tensor from the model
+    - target: the ground truth tensor
+    - scaler: the scaler instance used for normalizing/denormalizing the data
+
+    Returns:
+    - mse: the calculated mean squared error after denormalization
+    """
+    # Move tensors to CPU and convert to numpy for sklearn compatibility
+    output_np = output.cpu().numpy()
+    target_np = target.cpu().numpy()
+
+    # Denormalize the data
+    output_denorm = scaler.inverse_transform(output_np.reshape(-1, output_np.shape[-1]))
+    target_denorm = scaler.inverse_transform(target_np.reshape(-1, target_np.shape[-1]))
+
+    # Calculate MSE
+    mse = mean_squared_error(target_denorm, output_denorm)
+
+    return mse
 
 
 def find_all_clusters():

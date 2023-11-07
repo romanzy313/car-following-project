@@ -116,15 +116,9 @@ def train_model(
     for epoch in tqdm(
         range(epochs), position=1, leave=False, desc="training", colour="red"
     ):
-        # tqdm.write("hello world")
-        # time.sleep(0.2)
-        # continue
         model.train()
         optimizer.zero_grad()  # Reset gradients tensors
         for i, (X_batch, y_batch) in enumerate(dataloader):
-            # print(
-            #     f"Batch {i} - X_batch shape: {X_batch.shape}, y_batch shape: {y_batch.shape}"
-            # )  # Debugging line
             X_batch, y_batch = X_batch.to(device), y_batch.to(
                 device
             )  # Move batch data to the device
@@ -138,13 +132,6 @@ def train_model(
             if (i + 1) % accumulation_steps == 0 or i + 1 == len(dataloader):
                 optimizer.step()  # Perform a single optimization step
                 optimizer.zero_grad()  # Reset gradients tensors
-
-            # Clear some memory
-            del X_batch, y_batch, y_pred
-            # gc.collect()  # Force garbage collection
-            if device == "cuda":
-                torch.cuda.empty_cache()  # Clear cache if on GPU
-
         if epoch % 10 == 0:
             tqdm.write(
                 f"[{dataset}_{cluster_idx}] Epoch: {epoch} Loss: {loss.item() * accumulation_steps:.4f}"  # type: ignore
@@ -186,8 +173,8 @@ def run_training(
         scaler,
     ) = preprocess_data(cluster_df, n_steps_in, n_steps_out)
 
-    # X_train_tensor = X_train_tensor.to(device)
-    # y_train_tensor = y_train_tensor.to(device)
+    X_train_tensor = X_train_tensor.to(device)
+    y_train_tensor = y_train_tensor.to(device)
     # X_test_tensor = X_test_tensor.to(device)
     # y_test_tensor = y_test_tensor.to(device)
     # Create a DataLoader for batching
@@ -198,12 +185,10 @@ def run_training(
     # Use num_workers and pin_memory for faster data loading
     train_dataloader = DataLoader(
         train_dataset,
-
-        batch_size=256,
+        batch_size=35 * 12,
         shuffle=False,
-
         num_workers=num_workers,  # or more, depending on your CPU and data
-        pin_memory=True,
+        pin_memory=False,
         persistent_workers=True
         # pin_memory=False
         # pin_memory=True
@@ -293,7 +278,8 @@ num_workers = multiprocessing.cpu_count()
 
 # set the dataset and mode
 if __name__ == "__main__":
-    datas = find_all_clusters()
+    # datas = find_all_clusters()
+    datas = [{"dataset": "AH", "cluster": 0, "file": "../out_cluster/AH_0.zarr"}]
     print("running clustering on following datasets:", datas)
     os.makedirs(brain_dir, exist_ok=True)
     for v in tqdm(datas, position=0, leave=False, desc=" cluster", colour="green"):
