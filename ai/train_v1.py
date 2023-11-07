@@ -111,8 +111,8 @@ def train_model(
         for data in train_dataloader:  # type: ignore
             optimizer.zero_grad()  # type: ignore
 
-            input_seq = data[:, :30, :]
-            ground_truth = data[:, -10:, :]
+            input_seq = data[:, :30, :].to(device)
+            ground_truth = data[:, -10:, :].to(device)
 
             output_seq = model(input_seq)  # type: ignore
 
@@ -128,8 +128,8 @@ def train_model(
 
         with torch.no_grad():
             for data in val_dataloader:
-                input_seq = data[:, :30, :]
-                ground_truth = data[:, -10:, :]
+                input_seq = data[:, :30, :].to(device)
+                ground_truth = data[:, -10:, :].to(device)
 
                 output_seq = model(input_seq)
 
@@ -168,13 +168,12 @@ def train_model(
             if epochs_without_improvement == patience:
                 break
 
-        # Update learning rate
+        # # Update learning rate
         scheduler.step(val_loss)
 
-        if epoch % 10 == 0:
-            tqdm.write(
-                f"[{dataset}_{cluster_idx}] Epoch: {epoch} Loss: {loss.item():.4f} Val Loss: {val_loss:.4f} Avg MSE: {avg_mse_error:.4f}"
-            )
+        tqdm.write(
+            f"[{dataset}_{cluster_idx}] Epoch: {epoch} Loss: {loss.item():.4f} Val Loss: {val_loss:.4f} Avg MSE: {avg_mse_error:.4f}"
+        )
 
 
 def run_training(
@@ -208,7 +207,7 @@ def run_training(
     # Use num_workers and pin_memory for faster data loading
     train_dataloader = DataLoader(
         dataset=train_seq,  # type: ignore
-        batch_size=64,
+        batch_size=128,
         shuffle=False,
         num_workers=8,  # or more, depending on your CPU and data
         pin_memory=True,  # helps with faster data transfer to GPU
@@ -217,7 +216,7 @@ def run_training(
 
     eval_dataloader = DataLoader(
         dataset=val_seq,  # type: ignore
-        batch_size=64,
+        batch_size=128,
         shuffle=False,
         num_workers=8,  # or more, depending on your CPU and data
         pin_memory=True,  # helps with faster data transfer to GPU
@@ -354,15 +353,16 @@ cluster_dir = "../out_cluster"
 brain_dir = "../out_brain"
 n_steps_in = 30
 n_steps_out = 10
-epochs = 5
+epochs = 100
 lr = 0.01
+
 device = "auto"
-num_workers = multiprocessing.cpu_count()
+num_workers = multiprocessing.cpu_count() / 2
 
 # set the dataset and mode
 if __name__ == "__main__":
     # datas = find_all_clusters()
-    datas = [{"dataset": "HA", "cluster": 0, "file": "./out_cluster/HA_0.zarr"}]
+    datas = [{"dataset": "HA", "cluster": 0, "file": "../out_cluster/AH_0.zarr"}]
     os.makedirs(brain_dir, exist_ok=True)
     for v in tqdm(datas, position=0, leave=False, desc="per cluster", colour="green"):
         dataset = v["dataset"]
