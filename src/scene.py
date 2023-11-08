@@ -170,6 +170,9 @@ class Scene:
             self.models[0], self.road_length
         )
         accelerations.append(last_acc)
+
+        # print("ticking accelerations", accelerations)
+
         # step 3
         for i in range(0, len(self.models)):
             self.models[i].apply_acceleration(accelerations[i])
@@ -198,7 +201,10 @@ class Scene:
         def add_ttc(delta_positions, delta_velocities):
             if delta_velocities[-1] != 0:
                 ttc = delta_positions[-1] / delta_velocities[-1]
-                self.stat_ttc.append(ttc)
+                # extra checks to avoid blowing it out
+                # Yiru said this is ok
+                if ttc > 0 and ttc < 10:
+                    self.stat_ttc.append(ttc)
 
         for model in self.models:
             self.stat_velocity.append(model.velocities[-1])

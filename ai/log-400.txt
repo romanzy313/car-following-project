@@ -1,0 +1,148 @@
+running training on ['AH_0', 'HA_0', 'HA_1', 'HA_2', 'HH_0', 'HH_1', 'HH_2']
+[03:00:15] [AH_0] starting training
+[03:00:19] [AH_0] Epoch: 0 Loss: 0.0868 Val Loss: 0.0726 Avg MSE: 0.0726
+[03:00:55] [AH_0] Epoch: 10 Loss: 0.0119 Val Loss: 0.0194 Avg MSE: 0.0194
+[03:01:32] [AH_0] Epoch: 20 Loss: 0.0090 Val Loss: 0.0177 Avg MSE: 0.0177
+[03:02:09] [AH_0] Epoch: 30 Loss: 0.0074 Val Loss: 0.0147 Avg MSE: 0.0147
+[03:02:45] [AH_0] Epoch: 40 Loss: 0.0067 Val Loss: 0.0148 Avg MSE: 0.0148
+[03:03:22] [AH_0] Epoch: 50 Loss: 0.0068 Val Loss: 0.0141 Avg MSE: 0.0141
+[03:03:59] [AH_0] Epoch: 60 Loss: 0.0067 Val Loss: 0.0141 Avg MSE: 0.0141
+[03:04:36] [AH_0] Epoch: 70 Loss: 0.0066 Val Loss: 0.0141 Avg MSE: 0.0141
+[03:05:12] [AH_0] Epoch: 80 Loss: 0.0066 Val Loss: 0.0140 Avg MSE: 0.0140
+[03:05:49] [AH_0] Epoch: 90 Loss: 0.0065 Val Loss: 0.0140 Avg MSE: 0.0140
+[03:06:26] [AH_0] Epoch: 100 Loss: 0.0064 Val Loss: 0.0140 Avg MSE: 0.0140
+[03:07:03] [AH_0] Epoch: 110 Loss: 0.0064 Val Loss: 0.0140 Avg MSE: 0.0140
+[03:07:40] [AH_0] Epoch: 120 Loss: 0.0063 Val Loss: 0.0140 Avg MSE: 0.0140
+[03:08:17] [AH_0] Epoch: 130 Loss: 0.0063 Val Loss: 0.0140 Avg MSE: 0.0140
+[03:08:53] [AH_0] Epoch: 140 Loss: 0.0063 Val Loss: 0.0140 Avg MSE: 0.0140
+[03:09:30] [AH_0] Epoch: 150 Loss: 0.0062 Val Loss: 0.0140 Avg MSE: 0.0140
+[03:10:07] [AH_0] Epoch: 160 Loss: 0.0062 Val Loss: 0.0140 Avg MSE: 0.0140
+[03:10:46] [AH_0] Epoch: 170 Loss: 0.0062 Val Loss: 0.0140 Avg MSE: 0.0140
+[03:11:26] [AH_0] Epoch: 180 Loss: 0.0061 Val Loss: 0.0140 Avg MSE: 0.0140
+[03:12:03] [AH_0] Epoch: 190 Loss: 0.0061 Val Loss: 0.0139 Avg MSE: 0.0139
+[03:12:40] [AH_0] Epoch: 200 Loss: 0.0061 Val Loss: 0.0139 Avg MSE: 0.0139
+[03:13:17] [AH_0] Epoch: 210 Loss: 0.0060 Val Loss: 0.0139 Avg MSE: 0.0139
+[03:13:53] [AH_0] Epoch: 220 Loss: 0.0060 Val Loss: 0.0139 Avg MSE: 0.0139
+[03:14:30] [AH_0] Epoch: 230 Loss: 0.0060 Val Loss: 0.0139 Avg MSE: 0.0139
+[03:15:07] [AH_0] Epoch: 240 Loss: 0.0060 Val Loss: 0.0139 Avg MSE: 0.0139
+[03:15:44] [AH_0] Epoch: 250 Loss: 0.0059 Val Loss: 0.0139 Avg MSE: 0.0139
+[03:16:20] [AH_0] Epoch: 260 Loss: 0.0059 Val Loss: 0.0139 Avg MSE: 0.0139
+[03:16:57] [AH_0] Epoch: 270 Loss: 0.0059 Val Loss: 0.0139 Avg MSE: 0.0139
+[03:17:37] [AH_0] Epoch: 280 Loss: 0.0058 Val Loss: 0.0139 Avg MSE: 0.0139
+[03:18:14] [AH_0] Epoch: 290 Loss: 0.0058 Val Loss: 0.0139 Avg MSE: 0.0139
+[03:18:50] [AH_0] Epoch: 300 Loss: 0.0058 Val Loss: 0.0139 Avg MSE: 0.0139
+[03:19:27] [AH_0] Epoch: 310 Loss: 0.0057 Val Loss: 0.0139 Avg MSE: 0.0139
+[03:20:04] [AH_0] Epoch: 320 Loss: 0.0057 Val Loss: 0.0139 Avg MSE: 0.0139
+[03:20:41] [AH_0] Epoch: 330 Loss: 0.0056 Val Loss: 0.0138 Avg MSE: 0.0138
+[03:21:17] [AH_0] Epoch: 340 Loss: 0.0056 Val Loss: 0.0138 Avg MSE: 0.0138
+[03:21:54] [AH_0] Epoch: 350 Loss: 0.0055 Val Loss: 0.0138 Avg MSE: 0.0138
+[03:22:31] [AH_0] Epoch: 360 Loss: 0.0055 Val Loss: 0.0138 Avg MSE: 0.0138
+[03:23:08] [AH_0] Epoch: 370 Loss: 0.0055 Val Loss: 0.0138 Avg MSE: 0.0138
+[03:23:49] [AH_0] Epoch: 380 Loss: 0.0054 Val Loss: 0.0138 Avg MSE: 0.0138
+[03:24:27] [AH_0] Epoch: 390 Loss: 0.0054 Val Loss: 0.0138 Avg MSE: 0.0138
+[03:25:00] [AH_0] Finished traning. Epoch: 399 Loss: 0.0054 Val Loss: 0.0138 Avg MSE: 0.0138
+[03:25:00] [AH_0] dataset saved to ../out_brain_64/AH_0.pth
+[03:25:01] [HA_0] starting training
+[03:25:08] [HA_0] Epoch: 0 Loss: 0.1451 Val Loss: 0.1928 Avg MSE: 0.1928
+[03:26:20] [HA_0] Epoch: 10 Loss: 0.0098 Val Loss: 0.0257 Avg MSE: 0.0257
+[03:27:32] [HA_0] Epoch: 20 Loss: 0.0096 Val Loss: 0.0163 Avg MSE: 0.0163
+[03:28:43] [HA_0] Epoch: 30 Loss: 0.0080 Val Loss: 0.0129 Avg MSE: 0.0129
+[03:29:55] [HA_0] Epoch: 40 Loss: 0.0099 Val Loss: 0.0127 Avg MSE: 0.0127
+[03:31:07] [HA_0] Epoch: 50 Loss: 0.0089 Val Loss: 0.0124 Avg MSE: 0.0124
+[03:32:18] [HA_0] Epoch: 60 Loss: 0.0092 Val Loss: 0.0123 Avg MSE: 0.0123
+[03:33:30] [HA_0] Epoch: 70 Loss: 0.0098 Val Loss: 0.0120 Avg MSE: 0.0120
+[03:34:42] [HA_0] Epoch: 80 Loss: 0.0091 Val Loss: 0.0157 Avg MSE: 0.0157
+[03:36:04] [HA_0] Epoch: 90 Loss: 0.0077 Val Loss: 0.0110 Avg MSE: 0.0110
+[03:37:16] [HA_0] Epoch: 100 Loss: 0.0073 Val Loss: 0.0107 Avg MSE: 0.0107
+[03:38:28] [HA_0] Epoch: 110 Loss: 0.0070 Val Loss: 0.0106 Avg MSE: 0.0106
+[03:39:40] [HA_0] Epoch: 120 Loss: 0.0069 Val Loss: 0.0109 Avg MSE: 0.0109
+[03:40:52] [HA_0] Epoch: 130 Loss: 0.0065 Val Loss: 0.0105 Avg MSE: 0.0105
+[03:42:03] [HA_0] Epoch: 140 Loss: 0.0065 Val Loss: 0.0105 Avg MSE: 0.0105
+[03:43:15] [HA_0] Epoch: 150 Loss: 0.0064 Val Loss: 0.0104 Avg MSE: 0.0104
+[03:44:26] [HA_0] Epoch: 160 Loss: 0.0064 Val Loss: 0.0104 Avg MSE: 0.0104
+[03:45:38] [HA_0] Epoch: 170 Loss: 0.0064 Val Loss: 0.0104 Avg MSE: 0.0104
+[03:46:50] [HA_0] Epoch: 180 Loss: 0.0064 Val Loss: 0.0104 Avg MSE: 0.0104
+[03:48:01] [HA_0] Epoch: 190 Loss: 0.0064 Val Loss: 0.0104 Avg MSE: 0.0104
+[03:49:13] [HA_0] Epoch: 200 Loss: 0.0064 Val Loss: 0.0104 Avg MSE: 0.0104
+[03:50:30] [HA_0] Epoch: 210 Loss: 0.0064 Val Loss: 0.0104 Avg MSE: 0.0104
+[03:51:53] [HA_0] Epoch: 220 Loss: 0.0064 Val Loss: 0.0104 Avg MSE: 0.0104
+[03:53:05] [HA_0] Epoch: 230 Loss: 0.0064 Val Loss: 0.0104 Avg MSE: 0.0104
+[03:54:17] [HA_0] Epoch: 240 Loss: 0.0064 Val Loss: 0.0104 Avg MSE: 0.0104
+Early stopping triggered
+[03:54:45] [HA_0] dataset saved to ../out_brain_64/HA_0.pth
+[03:54:45] [HA_1] starting training
+[03:54:51] [HA_1] Epoch: 0 Loss: 0.0809 Val Loss: 0.0490 Avg MSE: 0.0490
+[03:55:51] [HA_1] Epoch: 10 Loss: 0.0199 Val Loss: 0.0307 Avg MSE: 0.0307
+[03:56:50] [HA_1] Epoch: 20 Loss: 0.0130 Val Loss: 0.0177 Avg MSE: 0.0177
+[03:57:49] [HA_1] Epoch: 30 Loss: 0.0156 Val Loss: 0.0165 Avg MSE: 0.0165
+[03:58:49] [HA_1] Epoch: 40 Loss: 0.0077 Val Loss: 0.0126 Avg MSE: 0.0126
+[03:59:48] [HA_1] Epoch: 50 Loss: 0.0077 Val Loss: 0.0122 Avg MSE: 0.0122
+[04:00:47] [HA_1] Epoch: 60 Loss: 0.0074 Val Loss: 0.0121 Avg MSE: 0.0121
+[04:01:48] [HA_1] Epoch: 70 Loss: 0.0070 Val Loss: 0.0119 Avg MSE: 0.0119
+[04:02:48] [HA_1] Epoch: 80 Loss: 0.0068 Val Loss: 0.0118 Avg MSE: 0.0118
+[04:03:53] [HA_1] Epoch: 90 Loss: 0.0068 Val Loss: 0.0117 Avg MSE: 0.0117
+[04:04:52] [HA_1] Epoch: 100 Loss: 0.0065 Val Loss: 0.0117 Avg MSE: 0.0117
+[04:05:51] [HA_1] Epoch: 110 Loss: 0.0062 Val Loss: 0.0116 Avg MSE: 0.0116
+[04:06:51] [HA_1] Epoch: 120 Loss: 0.0061 Val Loss: 0.0116 Avg MSE: 0.0116
+[04:07:50] [HA_1] Epoch: 130 Loss: 0.0060 Val Loss: 0.0114 Avg MSE: 0.0114
+[04:08:49] [HA_1] Epoch: 140 Loss: 0.0059 Val Loss: 0.0114 Avg MSE: 0.0114
+[04:09:48] [HA_1] Epoch: 150 Loss: 0.0051 Val Loss: 0.0113 Avg MSE: 0.0113
+[04:10:47] [HA_1] Epoch: 160 Loss: 0.0053 Val Loss: 0.0113 Avg MSE: 0.0113
+[04:11:47] [HA_1] Epoch: 170 Loss: 0.0053 Val Loss: 0.0113 Avg MSE: 0.0113
+[04:12:46] [HA_1] Epoch: 180 Loss: 0.0053 Val Loss: 0.0113 Avg MSE: 0.0113
+[04:13:45] [HA_1] Epoch: 190 Loss: 0.0053 Val Loss: 0.0113 Avg MSE: 0.0113
+[04:14:54] [HA_1] Epoch: 200 Loss: 0.0053 Val Loss: 0.0113 Avg MSE: 0.0113
+[04:15:53] [HA_1] Epoch: 210 Loss: 0.0053 Val Loss: 0.0113 Avg MSE: 0.0113
+[04:16:52] [HA_1] Epoch: 220 Loss: 0.0053 Val Loss: 0.0113 Avg MSE: 0.0113
+[04:17:52] [HA_1] Epoch: 230 Loss: 0.0053 Val Loss: 0.0113 Avg MSE: 0.0113
+Early stopping triggered
+[04:18:03] [HA_1] dataset saved to ../out_brain_64/HA_1.pth
+[04:18:03] [HA_2] starting training
+[04:18:04] [HA_2] Epoch: 0 Loss: 162.5262 Val Loss: 175.0381 Avg MSE: 175.0381
+[04:18:10] [HA_2] Epoch: 10 Loss: 92.9901 Val Loss: 94.6658 Avg MSE: 94.6658
+[04:18:17] [HA_2] Epoch: 20 Loss: 28.2914 Val Loss: 29.9921 Avg MSE: 29.9921
+[04:18:23] [HA_2] Epoch: 30 Loss: 3.4568 Val Loss: 4.4606 Avg MSE: 4.4606
+[04:18:30] [HA_2] Epoch: 40 Loss: 0.2083 Val Loss: 0.0583 Avg MSE: 0.0583
+[04:18:36] [HA_2] Epoch: 50 Loss: 0.9708 Val Loss: 0.2083 Avg MSE: 0.2083
+Early stopping triggered
+[04:18:43] [HA_2] dataset saved to ../out_brain_64/HA_2.pth
+[04:18:43] [HH_0] starting training
+[04:18:44] [HH_0] Epoch: 0 Loss: 12.7941 Val Loss: 12.1287 Avg MSE: 12.1287
+[04:18:55] [HH_0] Epoch: 10 Loss: 0.3638 Val Loss: 0.3050 Avg MSE: 0.3050
+[04:19:06] [HH_0] Epoch: 20 Loss: 0.0975 Val Loss: 0.1416 Avg MSE: 0.1416
+[04:19:17] [HH_0] Epoch: 30 Loss: 0.0580 Val Loss: 0.1278 Avg MSE: 0.1278
+[04:19:30] [HH_0] Epoch: 40 Loss: 0.0514 Val Loss: 0.1194 Avg MSE: 0.1194
+[04:19:41] [HH_0] Epoch: 50 Loss: 0.0467 Val Loss: 0.0925 Avg MSE: 0.0925
+[04:19:52] [HH_0] Epoch: 60 Loss: 0.0425 Val Loss: 0.0891 Avg MSE: 0.0891
+[04:20:03] [HH_0] Epoch: 70 Loss: 0.0458 Val Loss: 0.0893 Avg MSE: 0.0893
+[04:20:14] [HH_0] Epoch: 80 Loss: 0.0412 Val Loss: 0.0861 Avg MSE: 0.0861
+[04:20:25] [HH_0] Epoch: 90 Loss: 0.0389 Val Loss: 0.0848 Avg MSE: 0.0848
+[04:20:36] [HH_0] Epoch: 100 Loss: 0.0335 Val Loss: 0.0845 Avg MSE: 0.0845
+[04:20:48] [HH_0] Epoch: 110 Loss: 0.0315 Val Loss: 0.0840 Avg MSE: 0.0840
+[04:20:59] [HH_0] Epoch: 120 Loss: 0.0303 Val Loss: 0.0834 Avg MSE: 0.0834
+[04:21:10] [HH_0] Epoch: 130 Loss: 0.0306 Val Loss: 0.0832 Avg MSE: 0.0832
+[04:21:21] [HH_0] Epoch: 140 Loss: 0.0305 Val Loss: 0.0832 Avg MSE: 0.0832
+Early stopping triggered
+[04:21:31] [HH_0] dataset saved to ../out_brain_64/HH_0.pth
+[04:21:32] [HH_1] starting training
+[04:21:44] [HH_1] Epoch: 0 Loss: 0.0445 Val Loss: 0.0893 Avg MSE: 0.0893
+[04:23:46] [HH_1] Epoch: 10 Loss: 0.0052 Val Loss: 0.0482 Avg MSE: 0.0482
+[04:25:48] [HH_1] Epoch: 20 Loss: 0.0040 Val Loss: 0.0419 Avg MSE: 0.0419
+[04:27:55] [HH_1] Epoch: 30 Loss: 0.0111 Val Loss: 0.0435 Avg MSE: 0.0435
+[04:30:03] [HH_1] Epoch: 40 Loss: 0.0028 Val Loss: 0.0331 Avg MSE: 0.0331
+[04:32:05] [HH_1] Epoch: 50 Loss: 0.0025 Val Loss: 0.0330 Avg MSE: 0.0330
+[04:34:09] [HH_1] Epoch: 60 Loss: 0.0019 Val Loss: 0.0323 Avg MSE: 0.0323
+[04:36:11] [HH_1] Epoch: 70 Loss: 0.0019 Val Loss: 0.0323 Avg MSE: 0.0323
+Early stopping triggered
+[04:37:36] [HH_1] dataset saved to ../out_brain_64/HH_1.pth
+[04:37:36] [HH_2] starting training
+[04:37:37] [HH_2] Epoch: 0 Loss: 213.6245 Val Loss: 329.0746 Avg MSE: 329.0746
+[04:37:44] [HH_2] Epoch: 10 Loss: 127.0331 Val Loss: 238.4613 Avg MSE: 238.4613
+[04:37:50] [HH_2] Epoch: 20 Loss: 46.5639 Val Loss: 176.2339 Avg MSE: 176.2339
+[04:37:57] [HH_2] Epoch: 30 Loss: 14.4553 Val Loss: 144.5116 Avg MSE: 144.5116
+[04:38:03] [HH_2] Epoch: 40 Loss: 5.7190 Val Loss: 128.4259 Avg MSE: 128.4259
+[04:38:10] [HH_2] Epoch: 50 Loss: 5.8381 Val Loss: 123.2462 Avg MSE: 123.2462
+[04:38:16] [HH_2] Epoch: 60 Loss: 5.9973 Val Loss: 123.1417 Avg MSE: 123.1417
+[04:38:23] [HH_2] Epoch: 70 Loss: 5.6685 Val Loss: 124.2288 Avg MSE: 124.2288
+Early stopping triggered
+[04:38:26] [HH_2] dataset saved to ../out_brain_64/HH_2.pth

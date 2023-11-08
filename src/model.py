@@ -66,17 +66,25 @@ class Model:
 
     def get_deltas_with_next(self, next: Model):
         delta_positions = []
+        delta_velocities = []
 
         for i in range(len(self.positions)):
-            delta_positions.append(
-                next.positions[i]
-                - self.positions[i]
+            distance = (
+                next.positions[-1]
                 - next.vehicle.length / 2
+                - self.positions[-1]
                 - self.vehicle.length / 2
             )
-        delta_velocities: Any = list(
-            map(operator.sub, self.velocities, next.velocities)
-        )
+            delta_positions.append(distance)
+            delta_velocities.append(self.velocities[i] - next.velocities[i])
+        # delta_velocities: Any = list(
+        #     map(
+        #         operator.sub,
+        #         next.velocities,
+        #         self.velocities,
+        #     )
+        #     # map(operator.sub, self.velocities, next.velocities)
+        # )
 
         if True in (t < 0 for t in delta_positions):
             print(
@@ -89,25 +97,43 @@ class Model:
         return (delta_positions, delta_velocities)
 
     def get_deltas_on_last(self, first: Model, road_length: float):
-        last = self
+        delta_positions = []
+        delta_velocities = []
 
-        inner_deltas_pos: Any = list(map(operator.sub, last.positions, first.positions))
-        delta_positions: Any = [
-            *map(
-                lambda x: road_length
-                - x
-                - self.vehicle.length / 2  # add vehicle length to it
-                - first.vehicle.length / 2,
-                inner_deltas_pos,
+        for i in range(len(self.positions)):
+            distance = road_length - (
+                self.positions[i]
+                - first.positions[i]
+                + self.vehicle.length / 2
+                + first.vehicle.length / 2
             )
-        ]
-        delta_velocities: Any = list(
-            map(operator.sub, last.velocities, first.velocities)
-        )
+            delta_positions.append(distance)
+            delta_velocities.append(self.velocities[i] - first.velocities[i])
+
+        # inner_deltas_pos: Any = list(map(operator.sub, last.positions, first.positions))
+        # delta_positions: Any = [
+        #     *map(
+        #         lambda x: road_length
+        #         - (
+        #             x
+        #             - self.vehicle.length / 2  # add vehicle length to it
+        #             - first.vehicle.length / 2,
+        #             inner_deltas_pos,
+        #         ),
+        #     )
+        # ]
+        # delta_velocities: Any = list(
+        #     map(
+        #         operator.sub,
+        #         first.velocities,
+        #         self.velocities,
+        #     )
+        #     # map(operator.sub, self.velocities, first.velocities)
+        # )
 
         if True in (t < 0 for t in delta_positions):
             print(
-                f"[{self.name}] LAST Negative delta position detected!!!",
+                f"[{self.name}] CRITICAL WARNING LAST Negative delta position detected!!!",
                 delta_positions,
             )
 
@@ -116,7 +142,13 @@ class Model:
     def tick_and_get_acceleration_with_next(self, next: Model) -> float:
         (delta_positions, delta_velocities) = self.get_deltas_with_next(next)
 
-        this_acc = self.tick(self.velocities, delta_positions, delta_velocities)
+        this_acc = self.tick(
+            delta_velocities=delta_velocities,
+            delta_positions=delta_positions,
+            follower_velocities=self.velocities,
+        )
+
+        # print("FIRST delta pos", delta_positions[-1], "delta_vel", delta_velocities[-1])
 
         self.iteration += 1
 
@@ -130,7 +162,13 @@ class Model:
             first, road_length
         )
 
-        this_acc = self.tick(self.velocities, delta_positions, delta_velocities)
+        # print("LAST delta pos", delta_positions[-1], "delta_vel", delta_velocities[-1])
+
+        this_acc = self.tick(
+            delta_velocities=delta_velocities,
+            delta_positions=delta_positions,
+            follower_velocities=self.velocities,
+        )
         # print("last acc is", this_acc, "pos", delta_positions, "vel", delta_velocities)
 
         self.iteration += 1
@@ -146,7 +184,7 @@ class Model:
         )
         # print(self.id, "distance with next", distance)
         if distance <= 0:
-            print(f"NEXT Vehicle {self.id} collided with {next.id}")
+            # print(f"NEXT Vehicle {self.id} collided with {next.id}")
             return True
 
         return False
@@ -167,9 +205,9 @@ class Model:
 
     def tick(
         self,
-        follower_velocities: List[float],
-        delta_positions: List[float],
         delta_velocities: List[float],
+        delta_positions: List[float],
+        follower_velocities: List[float],
     ) -> float:
         """
         Abstract function
