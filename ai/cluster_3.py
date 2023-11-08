@@ -331,3 +331,5 @@ os.makedirs(out_dir, exist_ok=True)
 save_AH_without_clustering()
 cluster_and_save("HA")
 cluster_and_save("HH")
+
+# %%

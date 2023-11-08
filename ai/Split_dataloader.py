@@ -6,6 +6,7 @@ import torch
 from sklearn.preprocessing import StandardScaler
 from torch.utils.data import Dataset, DataLoader
 from read_data import read_data
+from read_data import get_scaler, get_train_data
 
 original_data_path = "./data/"  # this is my path, change it to yours
 # separated_data_path =
@@ -151,40 +152,51 @@ class CreateDataset:
         return history, future
 
 
-def create_dataloader(setname, type):
-    """
-    setname = dataset name like HA HH AH
-    type = train val
-    """
-    features, labels = read_data_wrapper(setname, type)
-    train_features_HA, train_labels_HA, test_features_HA, test_labels_HA = data_split(
+# %%
+# # # Test if the dataloader works
+# dataset = "HH"
+# cluster_idx = 0
+# train_dataloader_HA, _ = create_dataloader(dataset, cluster_idx)
+# history, future = next(iter(train_dataloader_HA))
+# print(f"Feature batch shape: {history.size()}")
+# print(f"Labels batch shape: {future.size()}")
+
+
+#
+# %%
+from read_data import get_train_data
+from torch.utils.data import DataLoader
+
+
+def prepare_dataloaders(dataset, cluster_idx, batch_size=64, shuffle_train=True):
+    # 获取数据
+    features = get_train_data(dataset, cluster_idx, "features")
+    labels = get_train_data(dataset, cluster_idx, "labels")
+
+    # 数据切分
+    train_features, train_labels, test_features, test_labels = data_split(
         features, labels
     )
-    # Create dataloader to be used
+
+    # 创建数据集
+    train_dataset = CreateDataset(train_features, train_labels)
+    test_dataset = CreateDataset(test_features, test_labels)
+
+    # 创建数据加载器
     train_dataloader = DataLoader(
-        CreateDataset(train_features_HA, train_labels_HA),
-        batch_size=64,
-        shuffle=False,
-        pin_memory=True,
-        persistent_workers=True,
-    )  # batch_size can also be 128
-    test_dataloader = DataLoader(
-        CreateDataset(test_features_HA, test_labels_HA),
-        batch_size=64,
-        shuffle=False,
-        pin_memory=True,
-        persistent_workers=True,
+        train_dataset, batch_size=batch_size, shuffle=shuffle_train
     )
+    test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
     return train_dataloader, test_dataloader
 
 
-# %%
-# # Test if the dataloader works
-train_dataloader_HA, _ = create_dataloader("HA", "train")
-history, future = next(iter(train_dataloader_HA))
+# 使用示例
+dataset = "HH"
+cluster_idx = 0
+train_dataloader, test_dataloader = prepare_dataloaders(dataset, cluster_idx)
+history, future = next(iter(train_dataloader))
 print(f"Feature batch shape: {history.size()}")
 print(f"Labels batch shape: {future.size()}")
-
 
 # %%
