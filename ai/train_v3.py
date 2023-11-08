@@ -1,4 +1,5 @@
 # %%
+import datetime
 import numpy as np
 from pandas import DataFrame
 from Sec2SecRuntime import Seq2Seq
@@ -17,7 +18,7 @@ from glob import glob
 import re
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from Split_dataloader import prepare_dataloaders
-from ai.read_data import get_scaler
+from read_data import get_scaler
 
 
 def train_model(
@@ -43,7 +44,7 @@ def train_model(
     ):
         model.train()
         for history, future in train_dataloader:
-            optimizer.zero_grad()
+            # print("history is", history)
 
             # Since the data loader already separates history and future, no slicing is needed
             input_seq = history.to(device)
@@ -54,6 +55,7 @@ def train_model(
             loss = loss_function(output_seq[:, :, 0], ground_truth)
             loss.backward()
             optimizer.step()
+            optimizer.zero_grad()
 
         # Evaluation
         model.eval()
@@ -94,10 +96,13 @@ def train_model(
 
         # Update learning rate
         scheduler.step(val_loss)
+        current_time = datetime.datetime.now()
 
+        # Format the time as [hr-min-sec]
+        timestamp = current_time.strftime("[%H:%M:%S]")
         # Print epoch stats
-        print(
-            f"[{dataset}_{cluster_idx}] Epoch: {epoch} Loss: {loss.item():.4f} Val Loss: {val_loss:.4f} Avg MSE: {avg_mse_error:.4f}"  # type: ignore
+        tqdm.write(
+            f"{timestamp} [{dataset}_{cluster_idx}] Epoch: {epoch} Loss: {loss.item():.4f} Val Loss: {val_loss:.4f} Avg MSE: {avg_mse_error:.4f}"  # type: ignore
         )
 
 
@@ -118,7 +123,7 @@ def run_training(
     device = (
         ("cuda" if torch.cuda.is_available() else "cpu") if device == "auto" else device
     )
-    tqdm.write(f"[{dataset}_{cluster_idx}] using device {device}")
+    # tqdm.write(f"[{dataset}_{cluster_idx}] using device {device}")
     # for j in tqdm(range(10), desc="j", colour='red'):
     # time.sleep(0.5)
     # for cluster, cluster_df in clustered_dataframes.items():
@@ -158,15 +163,22 @@ def run_training(
 
 
 def find_all_clusters():
-    all_datasets = glob(f"{cluster_dir}/*.zarr")
+    all_datasets = glob(f"{cluster_dir}/*.h5")
 
     result = []
 
+    print("all datasets", all_datasets)
+    pattern = r"/([A-Z]+)_(\d+)_"
     for path in all_datasets:
-        match = re.match(r".*?/([AH|HA|HH]+)_([0-9]+)\.zarr", path)
+        match = re.search(pattern, path)
 
+        # match = re.match(r".*?/([AH|HA|HH]+)_([0-9]+)_*", path)
+        print("match", match)
         if match:
-            dataset_name, cluster = match.groups()
+            dataset_name = match.group(1)
+            cluster = match.group(2)
+            print("dataset_name", dataset_name)
+            # dataset_name, cluster = match.groups()
             cluster = int(cluster)
             result.append({"dataset": dataset_name, "cluster": cluster, "file": path})
 
@@ -189,27 +201,39 @@ def train_cluster(dataset: str, cluster_idx: int, train_dataloader, eval_dataloa
 
 
 # Global settings are here
-cluster_dir = "../out_cluster"
+cluster_dir = "../out_segmented"
 brain_dir = "../out_brain"
 n_steps_in = 30
 n_steps_out = 10
-epochs = 100
+epochs = 3
 lr = 0.01
 
 device = "auto"
-num_workers = multiprocessing.cpu_count() / 2
+num_workers = 1
+batch_size = 64
 
 # set the dataset and mode
 if __name__ == "__main__":
-    dataset = "HH"
-    cluster_idx = 0
-    # datas = [{"dataset": "AH", "cluster": 0, "file": "../out_cluster/AH_0.zarr"}]
-
-    train_dataloader, eval_dataloader = prepare_dataloaders(dataset, cluster_idx)
-    train_cluster(dataset, cluster_idx, train_dataloader, eval_dataloader)
-    # os.makedirs(brain_dir, exist_ok=True)
-    # for v in tqdm(datas, position=0, leave=False, desc="per cluster", colour="green"):
-    #     dataset = v["dataset"]
-    #     cluster_idx = v["cluster"]
-    #     file = v["file"]
-    #     train_cluster(dataset, cluster_idx, train_dataloader, eval_dataloader)
+    os.makedirs(brain_dir, exist_ok=True)
+    # dataset = "HH"
+    # cluster_idx = 0
+    datas = [
+        {"dataset": "AH", "cluster": 0},
+        {"dataset": "HA", "cluster": 0},
+        {"dataset": "HA", "cluster": 1},
+        {"dataset": "HA", "cluster": 2},
+        {"dataset": "HH", "cluster": 0},
+        {"dataset": "HH", "cluster": 1},
+        {"dataset": "HH", "cluster": 2},
+    ]
+    # datas = find_all_clusters()
+    tqdm.write(
+        f"running training on datas {datas}",
+    )
+    for v in tqdm(datas, position=0, leave=False, desc="per cluster", colour="green"):
+        dataset = v["dataset"]
+        cluster_idx = v["cluster"]
+        train_dataloader, eval_dataloader = prepare_dataloaders(
+            dataset, cluster_idx, batch_size=batch_size, num_workers=num_workers
+        )
+        train_cluster(dataset, cluster_idx, train_dataloader, eval_dataloader)

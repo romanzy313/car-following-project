@@ -168,7 +168,8 @@ from read_data import get_train_data
 from torch.utils.data import DataLoader
 
 
-def prepare_dataloaders(dataset, cluster_idx, batch_size=64, shuffle_train=True):
+def prepare_dataloaders(dataset, cluster_idx, batch_size, num_workers):
+    shuffle_train = False
     # 获取数据
     features = get_train_data(dataset, cluster_idx, "features")
     labels = get_train_data(dataset, cluster_idx, "labels")
@@ -184,19 +185,19 @@ def prepare_dataloaders(dataset, cluster_idx, batch_size=64, shuffle_train=True)
 
     # 创建数据加载器
     train_dataloader = DataLoader(
-        train_dataset, batch_size=batch_size, shuffle=shuffle_train
+        train_dataset, batch_size=batch_size, shuffle=shuffle_train, num_workers=num_workers  # type: ignore
     )
-    test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+    test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)  # type: ignore
 
     return train_dataloader, test_dataloader
 
 
 # 使用示例
-dataset = "HH"
-cluster_idx = 0
-train_dataloader, test_dataloader = prepare_dataloaders(dataset, cluster_idx)
-history, future = next(iter(train_dataloader))
-print(f"Feature batch shape: {history.size()}")
-print(f"Labels batch shape: {future.size()}")
+# dataset = "AH"
+# cluster_idx = 0
+# train_dataloader, test_dataloader = prepare_dataloaders(dataset, cluster_idx)
+# history, future = next(iter(train_dataloader))
+# print(f"Feature batch shape: {history.size()}")
+# print(f"Labels batch shape: {future.size()}")
 
 # %%

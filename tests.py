@@ -90,7 +90,7 @@ def make_many_ai_models(
 
 
 brains = [
-    "./out_brain/HH_0.pth"
+    "./out_brain/AH_0.pth"
     # "./out_brain_30_epoch/AH_0.pth",
     # "./out_brain_30_epoch/HA_1.pth",
     # "./out_brain_30_epoch/HH_1.pth",
@@ -101,7 +101,7 @@ brains = [
     # "./src/model_scaler_cluster_1.pth",
 ]
 brain_arr = [0]
-brain_ids = ["HH_0"]
+brain_ids = ["AH_0"]
 
 
 class TestDrive:

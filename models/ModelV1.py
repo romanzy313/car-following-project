@@ -26,8 +26,8 @@ class Definition(Model):
     ) -> float:
         runtime_data = pd.DataFrame(
             {
-                "delta_position": delta_positions,
                 "delta_velocity": delta_velocities,
+                "delta_position": delta_positions,
                 "v_follower": follower_velocities,
             }
         )
@@ -39,7 +39,7 @@ class Definition(Model):
 
         # average it
         # result_acceleration = np.average(prophecy[:, 1])
-        result_acceleration = prophecy[0, 1]
+        result_acceleration = prophecy[0, 0]
         print(
             "prediction",
             result_acceleration,

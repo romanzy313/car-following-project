@@ -297,8 +297,8 @@ def train_df(dataset: str, clustered_data: pd.DataFrame, mode: str):
     Returns a DataFrame with delta position, delta velocity, v_follower and cluster.
     """
     data = read_data(dataset, mode)
-    data["delta_position"] = data["x_leader"] - data["x_follower"]
-    data["delta_velocity"] = data["v_follower"] - data["v_leader"]
+    # data["delta_position"] = data["x_leader"] - data["x_follower"]
+    # data["delta_velocity"] = data["v_follower"] - data["v_leader"]
 
     # Merge the data with clustered_data on 'case_id' to get the 'cluster' column
     data = pd.merge(
@@ -318,6 +318,7 @@ def cluster_and_save(dataset: str):
     print("clustering dataset", dataset)
     AH_data = convert_df(dataset, "train")
     clustered_data = get_clustered_df(AH_data)
+
     runtime_data = train_df(dataset, clustered_data, "train")
 
     grouped = runtime_data.groupby("cluster")

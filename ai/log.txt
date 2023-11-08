@@ -1,0 +1,8 @@
+running training on datas [{'dataset': 'AH', 'cluster': 0}, {'dataset': 'HA', 'cluster': 0}, {'dataset': 'HA', 'cluster': 1}, {'dataset': 'HA', 'cluster': 2}, {'dataset': 'HH', 'cluster': 0}, {'dataset': 'HH', 'cluster': 1}, {'dataset': 'HH', 'cluster': 2}]
+[AH_0] using device cpu
+[02-32-13] [AH_0] Epoch: 0 Loss: 0.7497 Val Loss: 0.7226 Avg MSE: 0.7226
+[02-32-26] [AH_0] Epoch: 1 Loss: 0.4851 Val Loss: 0.8923 Avg MSE: 0.8923
+[02-32-38] [AH_0] Epoch: 2 Loss: 0.1524 Val Loss: 0.2467 Avg MSE: 0.2467
+[HA_0] using device cpu
+[02-33-06] [HA_0] Epoch: 0 Loss: 0.3686 Val Loss: 1.3740 Avg MSE: 1.3740
+[02-33-34] [HA_0] Epoch: 1 Loss: 0.0633 Val Loss: 0.0979 Avg MSE: 0.0979

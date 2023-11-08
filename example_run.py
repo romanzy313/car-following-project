@@ -14,7 +14,7 @@ def main():
         model_name="ModelV1",
         model_args={
             "model_type": "H",
-            "data_file": "./out_brain_30_epoch/AH_0.pth",
+            "data_file": "./out_brain/AH_0.pth",
         },
         # model_args={"model_type": "H", "data_file": "./src/model_scaler_cluster_1.pth"},
         vehicle=vehicle,
