@@ -17,6 +17,7 @@ from glob import glob
 import re
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from Split_dataloader import prepare_dataloaders
+from ai.read_data import get_scaler
 
 
 def train_model(
@@ -148,7 +149,10 @@ def run_training(
     file_location = f"{brain_dir}/{dataset}_{cluster_idx}.pth"
     # Save the model for this cluster
     torch.save(
-        {"model_state_dict": model.state_dict()},
+        {
+            "model_state_dict": model.state_dict(),
+            "scaler": get_scaler(dataset, cluster_idx),
+        },
         file_location,
     )
 

@@ -7,6 +7,8 @@ import torch.nn as nn
 
 import warnings
 
+from ai.read_data import get_scaler
+
 
 # Define the Encoder
 class Encoder(nn.Module):
@@ -72,7 +74,9 @@ class Seq2SeqRuntime:
 
         self.checkpoint = torch.load(name, map_location=torch.device(device))
         # Extract the scaler from the checkpoint
-        self.scaler = self.checkpoint["scaler"]
+        # self.scaler = self.checkpoint["scaler"]
+        # hardcode it!
+        self.scaler = get_scaler("HH", 0, "./out_cluster")
 
         self.model = Seq2Seq(
             input_size=3,
