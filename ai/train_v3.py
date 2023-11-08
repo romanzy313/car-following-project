@@ -15,7 +15,21 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 from Split_dataloader import prepare_dataloaders
 from Sec2SecRuntime import Seq2Seq
 import matplotlib.pyplot as plt
-from ai.read_data import get_scaler
+from read_data import get_scaler
+
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-p", "--plot", dest="plot", action=argparse.BooleanOptionalAction)
+parser.set_defaults(plot=False)
+args = parser.parse_args()
+
+plot = args.plot
+
+
+def timestamp():
+    current_time = datetime.datetime.now()
+    return current_time.strftime("%H:%M:%S")
 
 
 def train_model(
@@ -94,19 +108,22 @@ def train_model(
         else:
             epochs_without_improvement += 1
             if epochs_without_improvement >= patience:
-                print("Early stopping triggered")
+                tqdm.write("Early stopping triggered")
                 break
 
         # Update learning rate
         scheduler.step(val_loss)
-        current_time = datetime.datetime.now()
 
-        # Format the time as [hr-min-sec]
-        timestamp = current_time.strftime("[%H:%M:%S]")
         # Print epoch stats
-        tqdm.write(
-            f"{timestamp} [{dataset}_{cluster_idx}] Epoch: {epoch} Loss: {loss.item():.4f} Val Loss: {val_loss:.4f} Avg MSE: {avg_mse_error:.4f}"  # type: ignore
-        )
+        if epoch % 10 == 0:
+            tqdm.write(
+                f"[{timestamp()}] [{dataset}_{cluster_idx}] Epoch: {epoch} Loss: {loss.item():.4f} Val Loss: {val_loss:.4f} Avg MSE: {avg_mse_error:.4f}"  # type: ignore
+            )
+
+        if epoch == epochs - 1:
+            tqdm.write(
+                f"[{timestamp()}] [{dataset}_{cluster_idx}] Finished traning. Epoch: {epoch} Loss: {loss.item():.4f} Val Loss: {val_loss:.4f} Avg MSE: {avg_mse_error:.4f}"  # type: ignore
+            )
 
     return train_losses, val_losses
 
@@ -121,9 +138,8 @@ def run_training(
     lr,
     device,
 ):
-    """
-    Autodevice will try to use cuda if possible, otherwise uses wtH is specified
-    """
+    tqdm.write(f"[{timestamp()}] [{dataset}_{cluster_idx}] starting training")
+
     # print("device specified", device)
     device = (
         ("cuda" if torch.cuda.is_available() else "cpu") if device == "auto" else device
@@ -167,7 +183,11 @@ def run_training(
         },
         file_location,
     )
-    plot_losses(train_losses, val_losses, cluster_idx, dataset)
+    tqdm.write(
+        f"[{timestamp()}] [{dataset}_{cluster_idx}] dataset saved to {file_location}"
+    )
+    if plot:
+        plot_losses(train_losses, val_losses, cluster_idx, dataset)
 
 
 def train_cluster(dataset: str, cluster_idx: int, train_dataloader, eval_dataloader):
@@ -200,27 +220,26 @@ def plot_losses(train_losses, val_losses, cluster_idx, dataset):
 
 
 # Constants
-CLUSTER_DIR = "../out_cluster"
+CLUSTER_DIR = "../out_segmented"
 brain_dir = "../out_brain"
 N_STEPS_IN = 30
 n_steps_out = 10
 epochs = 200
 lr = 0.01
 device = "auto"
+batch_size = 64
+num_workers = round(multiprocessing.cpu_count() / 2)
 
-
-def main():
+if __name__ == "__main__":
     os.makedirs(brain_dir, exist_ok=True)
-    clusters = ["AH_0", "AH_1", "HA_0", "HA_1", "HA_2", "HH_0", "HH_1", "HH_2"]
-
+    clusters = ["AH_0", "HA_0", "HA_1", "HA_2", "HH_0", "HH_1", "HH_2"]
+    tqdm.write(f"running training on {clusters}")
     for cluster_info in tqdm(
         clusters, position=0, leave=False, desc="per cluster", colour="green"
     ):
         dataset = cluster_info[:2]
         cluster_idx = cluster_info[-1]
-        train_dataloader, eval_dataloader = prepare_dataloaders(dataset, cluster_idx)
+        train_dataloader, eval_dataloader = prepare_dataloaders(
+            dataset, cluster_idx, batch_size=64, num_workers=22
+        )
         train_cluster(dataset, cluster_idx, train_dataloader, eval_dataloader)  # type: ignore
-
-
-if __name__ == "__main__":
-    main()
