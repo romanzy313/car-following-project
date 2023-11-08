@@ -1,22 +1,15 @@
 # %%
-import numpy as np
-from pandas import DataFrame
-from Sec2SecRuntime import Seq2Seq
-import multiprocessing
 import os
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error, mean_absolute_error
+import re
+from glob import glob
+from tqdm import tqdm
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import gc
-from tqdm import tqdm
-import math
-from torch.utils.data import DataLoader, TensorDataset, Dataset
-from glob import glob
-import re
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from Split_dataloader import prepare_dataloaders
+from Sec2SecRuntime import Seq2Seq
+import matplotlib.pyplot as plt
 
 
 def train_model(
@@ -27,6 +20,8 @@ def train_model(
     optimizer,
     loss_function,
     device,
+    dataset,
+    cluster_idx,
     accumulation_steps=4,
 ):
     model.to(device)
@@ -36,11 +31,14 @@ def train_model(
     patience = 20
     best_val_loss = float("inf")
     epochs_without_improvement = 0
+    train_losses = []
+    val_losses = []
 
     for epoch in tqdm(
         range(epochs), position=1, leave=False, desc="Training", colour="red"
     ):
         model.train()
+        train_loss = 0
         for history, future in train_dataloader:
             optimizer.zero_grad()
 
@@ -79,6 +77,7 @@ def train_model(
 
         # Compute average losses
         val_loss /= len(val_dataloader)
+        val_losses.append(val_loss)
         avg_mse_error = sum(mse_errors) / len(mse_errors)
 
         # Early stopping check
@@ -98,6 +97,8 @@ def train_model(
         print(
             f"[{dataset}_{cluster_idx}] Epoch: {epoch} Loss: {loss.item():.4f} Val Loss: {val_loss:.4f} Avg MSE: {avg_mse_error:.4f}"  # type: ignore
         )
+
+    return train_losses, val_losses
 
 
 def run_training(
@@ -135,7 +136,7 @@ def run_training(
 
     model.to(device)  # Move model to the device (GPU or CPU)
 
-    train_model(
+    train_losses, val_losses = train_model(
         model,
         train_dataloader,  # Pass the DataLoader instead of tensors directly
         eval_dataloader,
@@ -143,6 +144,8 @@ def run_training(
         optimizer,
         loss_function,
         device,  # Pass the device to the training function
+        dataset,
+        cluster_idx,
     )
 
     file_location = f"{brain_dir}/{dataset}_{cluster_idx}.pth"
@@ -151,24 +154,7 @@ def run_training(
         {"model_state_dict": model.state_dict()},
         file_location,
     )
-
-
-def find_all_clusters():
-    all_datasets = glob(f"{cluster_dir}/*.zarr")
-
-    result = []
-
-    for path in all_datasets:
-        match = re.match(r".*?/([AH|HA|HH]+)_([0-9]+)\.zarr", path)
-
-        if match:
-            dataset_name, cluster = match.groups()
-            cluster = int(cluster)
-            result.append({"dataset": dataset_name, "cluster": cluster, "file": path})
-
-    return result
-    # extract names from it too
-    # for i in tqdm(datasets, position=0, leave=False, desc="i", colour="green"):
+    plot_losses(train_losses, val_losses, cluster_idx, dataset)
 
 
 def train_cluster(dataset: str, cluster_idx: int, train_dataloader, eval_dataloader):
@@ -184,28 +170,44 @@ def train_cluster(dataset: str, cluster_idx: int, train_dataloader, eval_dataloa
     )
 
 
-# Global settings are here
-cluster_dir = "../out_cluster"
+def plot_losses(train_losses, val_losses, cluster_idx, dataset):
+    # Plot the training and validation loss
+    plt.figure(figsize=(10, 5))
+    plt.plot(train_losses, label="Train Loss")
+    plt.plot(val_losses, label="Validation Loss")
+    plt.xlabel("Epochs")
+    plt.ylabel("Loss")
+    plt.legend()
+    plt.title(f"Training and Validation Losses for {dataset}_{cluster_idx}")
+
+    # Save the figure
+    loss_fig_path = os.path.join(brain_dir, f"{dataset}_{cluster_idx}_loss.png")
+    plt.savefig(loss_fig_path, bbox_inches="tight")
+    plt.close()
+
+
+# Constants
+CLUSTER_DIR = "../out_cluster"
 brain_dir = "../out_brain"
-n_steps_in = 30
+N_STEPS_IN = 30
 n_steps_out = 10
-epochs = 100
+epochs = 200
 lr = 0.01
-
 device = "auto"
-num_workers = multiprocessing.cpu_count() / 2
 
-# set the dataset and mode
+
+def main():
+    os.makedirs(brain_dir, exist_ok=True)
+    clusters = ["AH_0", "AH_1", "HA_0", "HA_1", "HA_2", "HH_0", "HH_1", "HH_2"]
+
+    for cluster_info in tqdm(
+        clusters, position=0, leave=False, desc="per cluster", colour="green"
+    ):
+        dataset = cluster_info[:2]
+        cluster_idx = cluster_info[-1]
+        train_dataloader, eval_dataloader = prepare_dataloaders(dataset, cluster_idx)
+        train_cluster(dataset, cluster_idx, train_dataloader, eval_dataloader)  # type: ignore
+
+
 if __name__ == "__main__":
-    dataset = "HH"
-    cluster_idx = 0
-    # datas = [{"dataset": "AH", "cluster": 0, "file": "../out_cluster/AH_0.zarr"}]
-
-    train_dataloader, eval_dataloader = prepare_dataloaders(dataset, cluster_idx)
-    train_cluster(dataset, cluster_idx, train_dataloader, eval_dataloader)
-    # os.makedirs(brain_dir, exist_ok=True)
-    # for v in tqdm(datas, position=0, leave=False, desc="per cluster", colour="green"):
-    #     dataset = v["dataset"]
-    #     cluster_idx = v["cluster"]
-    #     file = v["file"]
-    #     train_cluster(dataset, cluster_idx, train_dataloader, eval_dataloader)
+    main()
