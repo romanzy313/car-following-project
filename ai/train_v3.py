@@ -153,7 +153,7 @@ def run_training(
 
     model = Seq2Seq(
         input_size=3,
-        hidden_size=128,
+        hidden_size=64,
         output_size=3,
         n_steps_out=n_steps_out,
     )
@@ -221,11 +221,11 @@ def plot_losses(train_losses, val_losses, cluster_idx, dataset):
 
 # Constants
 CLUSTER_DIR = "../out_segmented"
-brain_dir = "../out_brain"
+brain_dir = "../out_brain_64"
 N_STEPS_IN = 30
 n_steps_out = 10
-epochs = 200
-lr = 0.01
+epochs = 400
+lr = 0.005
 device = "auto"
 batch_size = 64
 num_workers = round(multiprocessing.cpu_count() / 2)

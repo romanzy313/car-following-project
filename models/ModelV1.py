@@ -20,9 +20,9 @@ class Definition(Model):
 
     def tick(
         self,
-        follower_velocities: List[float],
-        delta_positions: List[float],
         delta_velocities: List[float],
+        delta_positions: List[float],
+        follower_velocities: List[float],
     ) -> float:
         runtime_data = pd.DataFrame(
             {
@@ -40,16 +40,14 @@ class Definition(Model):
         # average it
         # result_acceleration = np.average(prophecy[:, 1])
         result_acceleration = prophecy[0, 0]
-        print(
-            "prediction",
-            result_acceleration,
-            "for delta pos",
-            delta_positions[-1],
-            "delta vel",
-            delta_velocities[-1],
-        )
-
-        # desired_velocity = prophecy[0][2]
+        # print(
+        #     "prediction",
+        #     result_acceleration,
+        #     "for delta pos",
+        #     delta_positions[-1],
+        #     "delta vel",
+        #     delta_velocities[-1],
+        # )
 
         # print(
         #     self.id,

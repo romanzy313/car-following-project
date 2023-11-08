@@ -75,13 +75,15 @@ class Seq2SeqRuntime:
         self.checkpoint = torch.load(name, map_location=torch.device(device))
         # Extract the scaler from the checkpoint
         self.scaler = self.checkpoint["scaler"]
+
+        print("scaler scale", self.scaler.mean_)
         # hardcode it!
         # self.scaler = get_scaler("HH", 0, "./out_segmented")
 
         self.model = Seq2Seq(
             input_size=3,
-            hidden_size=128,
-            n_steps_out=1,
+            hidden_size=64,
+            n_steps_out=10,
             output_size=3,
         )
 

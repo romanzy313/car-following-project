@@ -142,7 +142,11 @@ class Model:
     def tick_and_get_acceleration_with_next(self, next: Model) -> float:
         (delta_positions, delta_velocities) = self.get_deltas_with_next(next)
 
-        this_acc = self.tick(self.velocities, delta_positions, delta_velocities)
+        this_acc = self.tick(
+            delta_velocities=delta_velocities,
+            delta_positions=delta_positions,
+            follower_velocities=self.velocities,
+        )
 
         # print("FIRST delta pos", delta_positions[-1], "delta_vel", delta_velocities[-1])
 
@@ -160,7 +164,11 @@ class Model:
 
         # print("LAST delta pos", delta_positions[-1], "delta_vel", delta_velocities[-1])
 
-        this_acc = self.tick(self.velocities, delta_positions, delta_velocities)
+        this_acc = self.tick(
+            delta_velocities=delta_velocities,
+            delta_positions=delta_positions,
+            follower_velocities=self.velocities,
+        )
         # print("last acc is", this_acc, "pos", delta_positions, "vel", delta_velocities)
 
         self.iteration += 1
@@ -197,9 +205,9 @@ class Model:
 
     def tick(
         self,
-        follower_velocities: List[float],
-        delta_positions: List[float],
         delta_velocities: List[float],
+        delta_positions: List[float],
+        follower_velocities: List[float],
     ) -> float:
         """
         Abstract function
