@@ -1,3 +1,4 @@
+import src.patch_istarmap
 from functools import partial
 import json
 import random
@@ -8,10 +9,9 @@ from models import ModelV1
 from src.model import Model
 
 
-from src.scene import Scene, make_a_b_scene
+from src.scene import Scene
 from src.vehicle import Vehicle
-from multiprocessing import Pool, cpu_count
-import src.patch_istarmap
+from multiprocessing import Pool
 import re
 
 

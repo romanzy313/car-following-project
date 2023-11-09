@@ -12,12 +12,12 @@ class Definition(Model):
 
     def tick(
         self,
-        follower_velocities: List[float],
-        delta_positions: List[float],
         delta_velocities: List[float],
+        delta_positions: List[float],
+        follower_velocities: List[float],
     ) -> float:
         """
-        This dumbass model just presses gas
+        This model just presses gas
         """
 
         return self.gas_amount

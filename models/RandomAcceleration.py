@@ -12,9 +12,9 @@ class Definition(Model):
 
     def tick(
         self,
-        follower_velocities: List[float],
-        delta_positions: List[float],
         delta_velocities: List[float],
+        delta_positions: List[float],
+        follower_velocities: List[float],
     ) -> float:
         """
         This sample model tries to keep the same position as the vehicle in the front
