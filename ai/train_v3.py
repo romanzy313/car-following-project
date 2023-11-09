@@ -43,6 +43,7 @@ def train_model(
     dataset,
     cluster_idx,
     accumulation_steps=4,
+
 ):
     model.to(device)
 
@@ -137,6 +138,7 @@ def run_training(
     epochs,
     lr,
     device,
+    num_workers,
 ):
     tqdm.write(f"[{timestamp()}] [{dataset}_{cluster_idx}] starting training")
 
@@ -188,6 +190,7 @@ def run_training(
     )
     if plot:
         plot_losses(train_losses, val_losses, cluster_idx, dataset)
+
 
 
 def train_cluster(dataset: str, cluster_idx: int, train_dataloader, eval_dataloader):
