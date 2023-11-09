@@ -7,6 +7,8 @@ import torch.nn as nn
 
 import warnings
 
+# from ai.read_data import get_scaler
+
 
 # Define the Encoder
 class Encoder(nn.Module):
@@ -74,10 +76,13 @@ class Seq2SeqRuntime:
         # Extract the scaler from the checkpoint
         self.scaler = self.checkpoint["scaler"]
 
+        # hardcode it!
+        # self.scaler = get_scaler("HH", 0, "./out_segmented")
+
         self.model = Seq2Seq(
             input_size=3,
-            hidden_size=128,
-            n_steps_out=1,
+            hidden_size=64,
+            n_steps_out=10,
             output_size=3,
         )
 
@@ -98,12 +103,12 @@ class Seq2SeqRuntime:
 
         """
 
-        print("eval df")
-        print(eval_df)
+        # print("eval df")
+        # print(eval_df)
 
         data_normalized = self.scaler.transform(eval_df)
-        print("data normalized")
-        print(data_normalized)
+        # print("data normalized")
+        # print(data_normalized)
         X = []
         X.append(data_normalized)
         X_new_tensor = torch.tensor(X, dtype=torch.float32)

@@ -54,7 +54,10 @@ def aggregate_data_by_case(data):
         )
         .reset_index()
     )
-
+    aggr_data = aggr_data.add_suffix("_mean")  # Add a suffix to mean aggregated columns
+    aggr_data.rename(
+        columns={"case_id_mean": "case_id"}, inplace=True
+    )  # Ensure 'case_id' keeps its original name
     return aggr_data
 
 
@@ -77,6 +80,9 @@ def convert_df(dataset: str, mode: str):
     data = compute_delta_metrics(data)
     aggregated_data = aggregate_data_by_case(data)
     aggregated_data = adjust_ttc_sign(aggregated_data)
+    if "case_id" not in aggregated_data.columns:
+        raise KeyError("'case_id' column is missing in 'aggregated_data'.")
+
     return aggregated_data
 
 
@@ -113,7 +119,19 @@ def preprocess_features(features):
 
     # Standardize features by removing the mean and scaling to unit variance
     scaler = StandardScaler()
-    features_numeric = features.select_dtypes(include=[np.number])
+    features_numeric = features[
+        [
+            "delta_velocity",
+            "v_follower",
+            "delta_acceleration",
+            "a_follower",
+            "jerk_follower",
+            "time_headway",
+            "delta_position",
+            "TTC",
+            "TTC_min",
+        ]
+    ]
     normalized_data = scaler.fit_transform(features_numeric)
 
     return normalized_data, features_numeric
@@ -198,21 +216,23 @@ def get_clustered_df(features):
 
     normalized_data, features_numeric = preprocess_features(features)
     # Optionally apply PCA
-    pca_data = apply_dimensionality_reduction(normalized_data)
 
     # Find the optimal number of clusters
-    optimal_clusters = find_optimal_clusters(pca_data)
+    optimal_clusters = find_optimal_clusters(normalized_data)
 
     # Perform clustering with the optimal number of clusters
-    labels = perform_clustering(pca_data, optimal_clusters)
+    labels = perform_clustering(normalized_data, optimal_clusters)
     features_numeric["cluster"] = labels
 
     # Plot the results
+    pca_data = apply_dimensionality_reduction(normalized_data)
     plot_clusters(features_numeric, labels, pca_data)
 
     # Compute and display the average silhouette score
     silhouette_avg = silhouette_score(pca_data, labels)
     print(f"The average silhouette_score is: {silhouette_avg}")
+    if "case_id" not in features.columns:
+        raise KeyError("'case_id' column is missing from features after clustering.")
 
     return features_numeric
 
@@ -226,11 +246,16 @@ def train_df(dataset: str, clustered_data: pd.DataFrame, mode: str):
     data["delta_velocity"] = data["v_follower"] - data["v_leader"]
 
     # Merge the data with clustered_data on 'case_id' to get the 'cluster' column
+    if "case_id" not in data.columns:
+        raise KeyError("'case_id' column not found in data DataFrame from 'read_data'.")
+    if "case_id" not in clustered_data.columns:
+        raise KeyError("'case_id' column not found in clustered_data DataFrame.")
+
+    # Merge the data with clustered_data on 'case_id' to get the 'cluster' column
     data = pd.merge(
         data, clustered_data[["case_id", "cluster"]], on="case_id", how="left"
     )
     data = data[["delta_position", "delta_velocity", "v_follower", "cluster"]]
-    # print(data.head())
     return data
 
 

@@ -3,18 +3,21 @@ from src.aggregate_runner2 import AggregateSimulationRunner2
 from src.vehicle import Vehicle
 
 
-run_velocity = 10
+run_velocity = 12
 max_iterations_per_run = 1000
 road_length = 200
 vehicle_count = 10
 scenario_iterations = 50
 sweep_step = 0.2
 
-ai_brains = ["./out_brain/AH_0.pth"]
+ai_brains = ["./out_brain_64/AH_0.pth"]
 human_brains = [
-    "./out_brain/HA_0.pth",
-    "./out_brain/HA_1.pth",
-    "./out_brain/HH_0.pth",
+    "./out_brain_64/HA_0.pth",
+    "./out_brain_64/HA_1.pth",
+    "./out_brain_64/HA_2.pth",
+    "./out_brain_64/HH_0.pth",
+    "./out_brain_64/HH_1.pth",
+    "./out_brain_64/HH_2.pth",
     # "./out_brain/HH_1.pth",
 ]
 

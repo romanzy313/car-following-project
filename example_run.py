@@ -14,14 +14,14 @@ def main():
         model_name="ModelV1",
         model_args={
             "model_type": "H",
-            "data_file": "./out_brain_30_epoch/AH_0.pth",
+            "data_file": "./out_brain_64/AH_0.pth",
         },
         # model_args={"model_type": "H", "data_file": "./src/model_scaler_cluster_1.pth"},
         vehicle=vehicle,
         road_length=200,
-        vehicle_count=6,
+        vehicle_count=10,
         initial_velocity=15,
-        fuzzy_position=10,
+        fuzzy_position=3,
         max_iterations=max_iterations,
     )
 

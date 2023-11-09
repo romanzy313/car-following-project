@@ -1,34 +1,49 @@
 # %%
+import datetime
 import numpy as np
 from pandas import DataFrame
 from Sec2SecRuntime import Seq2Seq
 import multiprocessing
 import os
-from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error, mean_absolute_error
+import re
+from glob import glob
+from tqdm import tqdm
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import gc
-from tqdm import tqdm
-import math
-from torch.utils.data import DataLoader, TensorDataset, Dataset
-from glob import glob
-import re
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-from Split_dataloader import create_dataloader
+from Split_dataloader import prepare_dataloaders
+from Sec2SecRuntime import Seq2Seq
+import matplotlib.pyplot as plt
+from read_data import get_scaler
+
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-p", "--plot", dest="plot", action=argparse.BooleanOptionalAction)
+parser.set_defaults(plot=False)
+args = parser.parse_args()
+
+plot = args.plot
+
+
+def timestamp():
+    current_time = datetime.datetime.now()
+    return current_time.strftime("%H:%M:%S")
 
 
 def train_model(
     model,
     train_dataloader,
     val_dataloader,
-    scaler,
     epochs,
     optimizer,
     loss_function,
     device,
+    dataset,
+    cluster_idx,
+    accumulation_steps=4,
+
 ):
     model.to(device)
 
@@ -37,13 +52,16 @@ def train_model(
     patience = 20
     best_val_loss = float("inf")
     epochs_without_improvement = 0
+    train_losses = []
+    val_losses = []
 
     for epoch in tqdm(
         range(epochs), position=1, leave=False, desc="Training", colour="red"
     ):
         model.train()
+        train_loss = 0
         for history, future in train_dataloader:
-            optimizer.zero_grad()
+            # print("history is", history)
 
             # Since the data loader already separates history and future, no slicing is needed
             input_seq = history.to(device)
@@ -51,9 +69,10 @@ def train_model(
 
             output_seq = model(input_seq)
 
-            loss = loss_function(output_seq, ground_truth)
+            loss = loss_function(output_seq[:, :, 0], ground_truth)
             loss.backward()
             optimizer.step()
+            optimizer.zero_grad()
 
         # Evaluation
         model.eval()
@@ -67,17 +86,20 @@ def train_model(
 
                 output_seq = model(input_seq)
 
-                val_loss += loss_function(output_seq, ground_truth).item()
+                val_loss += loss_function(output_seq[:, :, 0], ground_truth).item()
 
                 # The following normalization and MSE calculation can be refactored into a function
                 # to reduce redundancy between training and validation loops.
-                mse_error = calculate_denormalized_mse(output_seq, ground_truth, scaler)
+                mse_error = torch.nn.functional.mse_loss(
+                    output_seq[:, :, 0], ground_truth
+                )
 
                 # Calculate MSE error and append to list
                 mse_errors.append(mse_error)
 
         # Compute average losses
         val_loss /= len(val_dataloader)
+        val_losses.append(val_loss)
         avg_mse_error = sum(mse_errors) / len(mse_errors)
 
         # Early stopping check
@@ -87,22 +109,29 @@ def train_model(
         else:
             epochs_without_improvement += 1
             if epochs_without_improvement >= patience:
-                print("Early stopping triggered")
+                tqdm.write("Early stopping triggered")
                 break
 
         # Update learning rate
         scheduler.step(val_loss)
 
         # Print epoch stats
-        print(
-            f"[{dataset}_{cluster_idx}] Epoch: {epoch} Loss: {loss.item():.4f} Val Loss: {val_loss:.4f} Avg MSE: {avg_mse_error:.4f}"
-        )
+        if epoch % 10 == 0:
+            tqdm.write(
+                f"[{timestamp()}] [{dataset}_{cluster_idx}] Epoch: {epoch} Loss: {loss.item():.4f} Val Loss: {val_loss:.4f} Avg MSE: {avg_mse_error:.4f}"  # type: ignore
+            )
+
+        if epoch == epochs - 1:
+            tqdm.write(
+                f"[{timestamp()}] [{dataset}_{cluster_idx}] Finished traning. Epoch: {epoch} Loss: {loss.item():.4f} Val Loss: {val_loss:.4f} Avg MSE: {avg_mse_error:.4f}"  # type: ignore
+            )
+
+    return train_losses, val_losses
 
 
 def run_training(
     train_dataloader,
     eval_dataloader,
-    scaler,
     dataset,
     cluster_idx,
     n_steps_out,
@@ -111,14 +140,13 @@ def run_training(
     device,
     num_workers,
 ):
-    """
-    Autodevice will try to use cuda if possible, otherwise uses wtH is specified
-    """
+    tqdm.write(f"[{timestamp()}] [{dataset}_{cluster_idx}] starting training")
+
     # print("device specified", device)
     device = (
         ("cuda" if torch.cuda.is_available() else "cpu") if device == "auto" else device
     )
-    tqdm.write(f"[{dataset}_{cluster_idx}] using device {device}")
+    # tqdm.write(f"[{dataset}_{cluster_idx}] using device {device}")
     # for j in tqdm(range(10), desc="j", colour='red'):
     # time.sleep(0.5)
     # for cluster, cluster_df in clustered_dataframes.items():
@@ -127,7 +155,7 @@ def run_training(
 
     model = Seq2Seq(
         input_size=3,
-        hidden_size=128,
+        hidden_size=64,
         output_size=3,
         n_steps_out=n_steps_out,
     )
@@ -136,127 +164,85 @@ def run_training(
 
     model.to(device)  # Move model to the device (GPU or CPU)
 
-    train_model(
+    train_losses, val_losses = train_model(
         model,
         train_dataloader,  # Pass the DataLoader instead of tensors directly
         eval_dataloader,
-        scaler,
         epochs,
         optimizer,
         loss_function,
         device,  # Pass the device to the training function
+        dataset,
+        cluster_idx,
     )
 
     file_location = f"{brain_dir}/{dataset}_{cluster_idx}.pth"
-    # Save the model and scaler for this cluster
+    # Save the model for this cluster
     torch.save(
-        {"model_state_dict": model.state_dict(), "scaler": scaler},
+        {
+            "model_state_dict": model.state_dict(),
+            "scaler": get_scaler(dataset, cluster_idx),
+        },
         file_location,
     )
+    tqdm.write(
+        f"[{timestamp()}] [{dataset}_{cluster_idx}] dataset saved to {file_location}"
+    )
+    if plot:
+        plot_losses(train_losses, val_losses, cluster_idx, dataset)
 
-    # evaluate_model(dataset, cluster_idx, model, scaler, device, eval_dataloader)
-    # type: ignore
-    models_scalers = (model, scaler)
-
-    return models_scalers
-
-
-def calculate_denormalized_mse(output, target, scaler):
-    """
-    Calculate the Mean Squared Error (MSE) between the model's outputs and the ground truth
-    after denormalizing the data.
-
-    Parameters:
-    - output: the output tensor from the model
-    - target: the ground truth tensor
-    - scaler: the scaler instance used for normalizing/denormalizing the data
-
-    Returns:
-    - mse: the calculated mean squared error after denormalization
-    """
-    # Move tensors to CPU and convert to numpy for sklearn compatibility
-    output_np = output.cpu().numpy()
-    target_np = target.cpu().numpy()
-
-    # Denormalize the data
-    output_denorm = scaler.inverse_transform(output_np.reshape(-1, output_np.shape[-1]))
-    target_denorm = scaler.inverse_transform(target_np.reshape(-1, target_np.shape[-1]))
-
-    # Calculate MSE
-    mse = mean_squared_error(target_denorm, output_denorm)
-
-    return mse
-
-
-def find_all_clusters():
-    all_datasets = glob(f"{cluster_dir}/*.zarr")
-
-    result = []
-
-    for path in all_datasets:
-        match = re.match(r".*?/([AH|HA|HH]+)_([0-9]+)\.zarr", path)
-
-        if match:
-            dataset_name, cluster = match.groups()
-            cluster = int(cluster)
-            result.append({"dataset": dataset_name, "cluster": cluster, "file": path})
-
-    return result
-    # extract names from it too
-    # for i in tqdm(datasets, position=0, leave=False, desc="i", colour="green"):
 
 
 def train_cluster(dataset: str, cluster_idx: int, train_dataloader, eval_dataloader):
-    # train_data = read_clustered_data(file)
-    # train_df, val_df, scaler = preprocess_data(train_data)
-
-    # train_seq = create_sequences(train_df)
-    # val_seq = create_sequences(val_df)
-
-    # train_seq = MyCustomDataset(train_seq)
-    # val_seq = MyCustomDataset(val_seq)
-
-    # # sequenced_dataset = MyCustomDataset(data_points)
-    # print(type(train_seq))
-    # print(f"This is the shape after sequenced", train_seq.__len__())
-
-    # tqdm.write(f"[{dataset}_{cluster_idx}] Dataset size {train_seq.__len__()}")
-
-    # train_data = train_data.sample(frac=0.01, random_state=1)
     run_training(
         train_dataloader=train_dataloader,
         eval_dataloader=eval_dataloader,
-        scaler=scaler,  # type: ignore
         dataset=dataset,
         cluster_idx=cluster_idx,
         n_steps_out=n_steps_out,
         epochs=epochs,
         lr=lr,
         device=device,
-        num_workers=num_workers,
     )
 
 
-# Global settings are here
-cluster_dir = "../out_cluster"
-brain_dir = "../out_brain"
-n_steps_in = 30
+def plot_losses(train_losses, val_losses, cluster_idx, dataset):
+    # Plot the training and validation loss
+    plt.figure(figsize=(10, 5))
+    plt.plot(train_losses, label="Train Loss")
+    plt.plot(val_losses, label="Validation Loss")
+    plt.xlabel("Epochs")
+    plt.ylabel("Loss")
+    plt.legend()
+    plt.title(f"Training and Validation Losses for {dataset}_{cluster_idx}")
+
+    # Save the figure
+    loss_fig_path = os.path.join(brain_dir, f"{dataset}_{cluster_idx}_loss.png")
+    plt.savefig(loss_fig_path, bbox_inches="tight")
+    plt.close()
+
+
+# Constants
+CLUSTER_DIR = "../out_segmented"
+brain_dir = "../out_brain_64"
+N_STEPS_IN = 30
 n_steps_out = 10
-epochs = 100
-lr = 0.01
-
+epochs = 400
+lr = 0.005
 device = "auto"
-num_workers = multiprocessing.cpu_count() / 2
+batch_size = 64
+num_workers = round(multiprocessing.cpu_count() / 2)
 
-# set the dataset and mode
 if __name__ == "__main__":
-    # datas = find_all_clusters()
-    datas = [{"dataset": "AH", "cluster": 0, "file": "../out_cluster/AH_0.zarr"}]
-    train_dataloader, eval_dataloader = create_dataloader("AH", "train")
-
     os.makedirs(brain_dir, exist_ok=True)
-    for v in tqdm(datas, position=0, leave=False, desc="per cluster", colour="green"):
-        dataset = v["dataset"]
-        cluster_idx = v["cluster"]
-        file = v["file"]
-        train_cluster(dataset, cluster_idx, train_dataloader, eval_dataloader)
+    clusters = ["AH_0", "HA_0", "HA_1", "HA_2", "HH_0", "HH_1", "HH_2"]
+    tqdm.write(f"running training on {clusters}")
+    for cluster_info in tqdm(
+        clusters, position=0, leave=False, desc="per cluster", colour="green"
+    ):
+        dataset = cluster_info[:2]
+        cluster_idx = cluster_info[-1]
+        train_dataloader, eval_dataloader = prepare_dataloaders(
+            dataset, cluster_idx, batch_size=64, num_workers=22
+        )
+        train_cluster(dataset, cluster_idx, train_dataloader, eval_dataloader)  # type: ignore

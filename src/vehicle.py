@@ -35,7 +35,6 @@ class Vehicle:
             self.max_deceleration,
             min(self.max_acceleration, acceleration),
         )
-
         if filtered_acc != acceleration:
             if self.warn_on_limits:
                 print(f"acceleration was limited from {acceleration} to {filtered_acc}")
