@@ -181,10 +181,21 @@ def create_dataloader(setname, type):
 
 # %%
 # # Test if the dataloader works
-train_dataloader_HA, _ = create_dataloader("HA", "train")
-history, future = next(iter(train_dataloader_HA))
-print(f"Feature batch shape: {history.size()}")
-print(f"Labels batch shape: {future.size()}")
+# train_dataloader_HA, _ = create_dataloader("HA", "train")
+# history, future = next(iter(train_dataloader_HA))
+# print(f"Feature batch shape: {history.size()}")
+# print(f"Labels batch shape: {future.size()}")
 
 
+# %%
+from read_data import get_scaler, get_train_data
+
+dataset = "HA"
+cluster_idx = 0
+# scaler = get_scaler(dataset, cluster_idx)
+dataset = CreateDataset(
+    get_train_data(dataset, cluster_idx, "features"),
+    get_train_data(dataset, cluster_idx, "labels"),
+)
+train_dataloader = DataLoader(dataset, batch_size=64, shuffle=False)  # type: ignore
 # %%
