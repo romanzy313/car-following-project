@@ -76,7 +76,6 @@ class Seq2SeqRuntime:
         # Extract the scaler from the checkpoint
         self.scaler = self.checkpoint["scaler"]
 
-        print("scaler scale", self.scaler.mean_)
         # hardcode it!
         # self.scaler = get_scaler("HH", 0, "./out_segmented")
 

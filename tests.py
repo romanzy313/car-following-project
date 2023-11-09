@@ -135,28 +135,6 @@ class TestDrive:
 
         assert runner.did_collide() == False, "collision"
 
-    # @pytest.mark.parametrize("brain_id", brain_arr, ids=brain_ids)
-    # @pytest.mark.parametrize("speed,min_speed,max_speed", [(1, 0.5, 1.5), (10, 9, 11)])
-    # def test_single_keep_speed(self, speed, min_speed, max_speed, brain_id):
-    #     # check that car can drive straight without colliding
-
-    #     ai_model = make_ai_model("1", 0, speed, brains[brain_id])
-
-    #     runner = SimulationRunner(
-    #         Scene(
-    #             name=f"single_vehicle_{speed}.{extract_brain_name(brains[brain_id])}",
-    #             models=[ai_model],
-    #             road_length=100,
-    #             max_iterations=400,
-    #         ),
-    #     )
-
-    #     runner.run()
-    #     runner.flush_to_disk()
-    #     final_vel = runner.scene.models[0].velocities[-1]
-    #     assert final_vel > min_speed, f"too slow {final_vel}"
-    #     assert final_vel < max_speed, f"too fast {final_vel}"
-
     # @pytest.mark.skip()
     @pytest.mark.parametrize("brain_id", brain_arr, ids=brain_ids)
     @pytest.mark.parametrize(
