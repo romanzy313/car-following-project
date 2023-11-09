@@ -16,8 +16,18 @@ from Split_dataloader import prepare_dataloaders
 from Sec2SecRuntime import Seq2Seq
 import matplotlib.pyplot as plt
 from read_data import get_scaler
-
 import argparse
+
+# Constants
+CLUSTER_DIR = "../out_segmented"
+brain_dir = "../out_brain_64"
+N_STEPS_IN = 30
+n_steps_out = 10
+epochs = 400
+lr = 0.005
+device = "auto"
+batch_size = 64
+num_workers = round(multiprocessing.cpu_count() / 2)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-p", "--plot", dest="plot", action=argparse.BooleanOptionalAction)
@@ -218,17 +228,6 @@ def plot_losses(train_losses, val_losses, cluster_idx, dataset):
     plt.savefig(loss_fig_path, bbox_inches="tight")
     plt.close()
 
-
-# Constants
-CLUSTER_DIR = "../out_segmented"
-brain_dir = "../out_brain_64"
-N_STEPS_IN = 30
-n_steps_out = 10
-epochs = 400
-lr = 0.005
-device = "auto"
-batch_size = 64
-num_workers = round(multiprocessing.cpu_count() / 2)
 
 if __name__ == "__main__":
     os.makedirs(brain_dir, exist_ok=True)

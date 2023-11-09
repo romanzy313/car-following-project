@@ -1,13 +1,73 @@
 # %%
+import os
+import pickle
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
 from read_data import read_data
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.metrics import silhouette_score
 import matplotlib.pyplot as plt
-import zarr
+
+out_dir = "../out_segmented"
+
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-p", "--plot", dest="plot", action=argparse.BooleanOptionalAction)
+parser.set_defaults(plot=False)
+args = parser.parse_args()
+
+plot = args.plot
+
+
+def segment_data_and_save(data, dataset, cluster):
+    data = data.copy()
+    data["delta_velocity"] = data["v_follower"] - data["v_leader"]
+    data["delta_position"] = data["x_leader"] - data["x_follower"]
+    data = data.sort_values(by=["case_id", "time"]).set_index("case_id")
+    features = []
+    labels = []
+    idx = 0
+    tqdm.write(f"segmenting data {dataset}_{cluster}")
+    for case_id in tqdm(data.index.unique(), desc=f"segmenting"):
+        df = data.loc[case_id]
+        future_idx_end = np.arange(
+            40, len(df), 40
+        )  # This line creates samples without overlapping, do that if the data amount is not enough or as you wish
+        # future_idx_end = np.concatenate((future_idx_end, future_idx_end[1:]-15)) # make 10 timesteps overlapping, of course running time will also double
+        future_idx_start = future_idx_end - 10
+        history_idx_end = future_idx_start
+        history_idx_start = history_idx_end - 30
+        for hstart, hend, fstart, fend in zip(
+            history_idx_start, history_idx_end, future_idx_start, future_idx_end
+        ):
+            feature = df.iloc[hstart:hend][
+                ["time", "delta_velocity", "delta_position", "v_follower"]
+            ].copy()
+            feature["sample_id"] = idx
+            label = df.iloc[fstart:fend][["time", "v_follower"]].copy()
+            label["sample_id"] = idx
+            features.append(feature)
+            labels.append(label)
+            idx += 1
+    features = pd.concat(features).reset_index()
+    # Standardize features
+    scaler = StandardScaler()
+    features[["delta_velocity", "delta_position", "v_follower"]] = scaler.fit_transform(
+        features[["delta_velocity", "delta_position", "v_follower"]]
+    )
+    # But do not standardize labels
+    labels = pd.concat(labels).reset_index()
+
+    features.to_hdf(out_dir + f"/{dataset}_{cluster}_features.h5", key="features")
+    labels.to_hdf(out_dir + f"/{dataset}_{cluster}_labels.h5", key="labels")
+    with open(out_dir + f"/{dataset}_{cluster}_scaler.pkl", "wb") as f:
+        pickle.dump(scaler, f)
+
+    return features, labels, scaler
 
 
 def compute_delta_metrics(data):
@@ -86,11 +146,49 @@ PCA_COMPONENTS = 2
 
 
 def preprocess_features(features):
-    """Normalize the features of a dataframe."""
+    # Replace inf/-inf with NaN
+    features = features.replace([np.inf, -np.inf], np.nan)
+
+    # Check for any remaining infinite values
+    if np.isinf(features.values).any():
+        raise ValueError(
+            "Input contains infinity or a value too large for dtype('float64')."
+        )
+
+    # Option 1: Drop rows with NaN values
+    # features = features.dropna()
+
+    # Option 2: Fill NaN values with the mean of the column
+    features = features.fillna(features.mean())
+
+    # Ensure all data is numeric
+    features = features.apply(pd.to_numeric, errors="coerce")
+
+    # Check for any NaN values created by to_numeric conversion
+    if features.isnull().values.any():
+        raise ValueError("NaN values were introduced by to_numeric conversion.")
+
+    # Drop any rows that still have NaN values (if any)
+    features = features.dropna()
+
+    # Standardize features by removing the mean and scaling to unit variance
     scaler = StandardScaler()
-    features_numeric = features.select_dtypes(include=np.number).dropna()
+    features_numeric = features[
+        [
+            "delta_velocity",
+            "v_follower",
+            "delta_acceleration",
+            "a_follower",
+            "jerk_follower",
+            "time_headway",
+            "delta_position",
+            "TTC",
+            "TTC_min",
+        ]
+    ]
     normalized_data = scaler.fit_transform(features_numeric)
-    return normalized_data, features_numeric
+
+    return normalized_data, features
 
 
 def apply_dimensionality_reduction(data, n_components=PCA_COMPONENTS):
@@ -131,17 +229,17 @@ def plot_clusters(features, labels, pca_data=None):
     plt.show()
 
 
-def find_optimal_clusters(data, max_clusters=5, silent=True):
+def find_optimal_clusters(data, max_clusters=12):
     """Determine the optimal cluster count using silhouette score and elbow method."""
     inertia_list = []
     silhouette_scores = []
-    for n_clusters in range(2, max_clusters + 1):
+    for n_clusters in tqdm(range(2, max_clusters + 1), desc="clustering"):
         kmeans = KMeans(n_clusters=n_clusters, random_state=RANDOM_STATE, n_init="auto")
         labels = kmeans.fit_predict(data)
         inertia_list.append(kmeans.inertia_)
         silhouette_scores.append(silhouette_score(data, labels))
 
-    if silent:
+    if plot:
         # Elbow Method Plot
         plt.figure(figsize=(10, 5))
         plt.subplot(1, 2, 1)
@@ -172,21 +270,23 @@ def get_clustered_df(features):
 
     normalized_data, features_numeric = preprocess_features(features)
 
-    # Optionally apply PCA
-    pca_data = apply_dimensionality_reduction(normalized_data)
-
     # Find the optimal number of clusters
-    optimal_clusters = find_optimal_clusters(pca_data)
+    # optimal_clusters = find_optimal_clusters(normalized_data)
+    optimal_clusters = 3
 
+    print("found optimal number of clusters to be", optimal_clusters)
     # Perform clustering with the optimal number of clusters
-    labels = perform_clustering(pca_data, optimal_clusters)
+    labels = perform_clustering(normalized_data, optimal_clusters)
     features_numeric["cluster"] = labels
 
     # Plot the results
-    plot_clusters(features_numeric, labels, pca_data)
+    if plot:
+        # Optionally apply PCA
+        pca_data = apply_dimensionality_reduction(normalized_data)
+        plot_clusters(features_numeric, labels, pca_data)
 
     # Compute and display the average silhouette score
-    silhouette_avg = silhouette_score(pca_data, labels)
+    silhouette_avg = silhouette_score(normalized_data, labels)
     print(f"The average silhouette_score is: {silhouette_avg}")
 
     return features_numeric
@@ -197,51 +297,40 @@ def train_df(dataset: str, clustered_data: pd.DataFrame, mode: str):
     Returns a DataFrame with delta position, delta velocity, v_follower and cluster.
     """
     data = read_data(dataset, mode)
-    data["delta_position"] = data["x_leader"] - data["x_follower"]
-    data["delta_velocity"] = data["v_follower"] - data["v_leader"]
+    # data["delta_position"] = data["x_leader"] - data["x_follower"]
+    # data["delta_velocity"] = data["v_follower"] - data["v_leader"]
 
     # Merge the data with clustered_data on 'case_id' to get the 'cluster' column
     data = pd.merge(
         data, clustered_data[["case_id", "cluster"]], on="case_id", how="left"
     )
-    data = data[["delta_position", "delta_velocity", "v_follower", "cluster"]]
-    # print(data.head())
     return data
 
 
-out_dir = "../out_cluster"
+def save_AH_without_clustering():
+    # save Ah as a single cluster
+    data = read_data("AH", "train")
 
-# # %% only do AH
-
-# # save Ah as a single cluster
-# AH_data = convert_df("AH", "train")
-# runtime_data = AH_data[["delta_position", "delta_velocity", "v_follower"]]
-# file_name = f"{out_dir}/AH_0.zarr"
-# print("saving AH dataset to", file_name)
-# zarr.save(file_name, runtime_data)
+    segment_data_and_save(data, "AH", 0)
 
 
-# %% now cluster other datasets and save them
-
-datasets = ["HA", "HH"]
-for dataset in datasets:
+def cluster_and_save(dataset: str):
     print("clustering dataset", dataset)
     AH_data = convert_df(dataset, "train")
     clustered_data = get_clustered_df(AH_data)
+
     runtime_data = train_df(dataset, clustered_data, "train")
-    # runtime_data = clustered_data[
-    #     ["delta_velocity", "delta_position", "v_follower", "cluster"]
-    # ]
+
     grouped = runtime_data.groupby("cluster")
 
     for cluster_value, group_df in grouped:
-        # Drop the 'cluster' column
-        group_df = group_df.drop(columns=["cluster"])
+        segment_data_and_save(group_df, dataset, int(str(cluster_value)[0]))
 
-        # Define the filename for the CSV file
-        file_name = f"{out_dir}/{dataset}_{cluster_value}.zarr"
-        print("saving cluster result to", file_name)
-        # print(group_df)
-        zarr.save(file_name, group_df)
+
+# %% now cluster other datasets and save them
+os.makedirs(out_dir, exist_ok=True)
+save_AH_without_clustering()
+cluster_and_save("HA")
+cluster_and_save("HH")
 
 # %%
