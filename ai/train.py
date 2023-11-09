@@ -53,7 +53,6 @@ def train_model(
     dataset,
     cluster_idx,
     accumulation_steps=4,
-
 ):
     model.to(device)
 
@@ -202,7 +201,6 @@ def run_training(
         plot_losses(train_losses, val_losses, cluster_idx, dataset)
 
 
-
 def train_cluster(dataset: str, cluster_idx: int, train_dataloader, eval_dataloader):
     run_training(
         train_dataloader=train_dataloader,
@@ -213,6 +211,7 @@ def train_cluster(dataset: str, cluster_idx: int, train_dataloader, eval_dataloa
         epochs=epochs,
         lr=lr,
         device=device,
+        num_workers=num_workers,
     )
 
 
