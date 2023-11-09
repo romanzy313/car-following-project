@@ -13,10 +13,10 @@ collision_counts = df.groupby("ai_percent")["collided"].sum()
 
 # Plotting
 
-fontsize = 18
+fontsize = 20
 
-plt.rc("xtick", labelsize=14)
-plt.rc("ytick", labelsize=14)
+plt.rc("xtick", labelsize=16)
+plt.rc("ytick", labelsize=16)
 # plt.rc("xlabel", labelsize=20)
 # plt.rc("ylabel", labelsize=20)
 
@@ -34,7 +34,7 @@ plt.ylabel("Avg. Velocity (m/s)", fontsize=fontsize)
 plt.xticks(average_velocity.index)
 plt.grid(True)
 # plt.show()
-plt.savefig("./plots/Average velocity vs ai%.png", bbox_inches="tight")
+plt.savefig("./plots/Average velocity vs ai.png", bbox_inches="tight")
 
 plt.figure(figsize=(9, 6))
 plt.bar(
@@ -50,5 +50,5 @@ plt.ylabel("Number of Collisions", fontsize=fontsize)
 plt.xticks(collision_counts.index)
 plt.grid(True)
 # plt.show()
-plt.savefig("./plots/collsion vs, ai %.png", bbox_inches="tight")
+plt.savefig("./plots/collsion vs, ai.png", bbox_inches="tight")
 ##
