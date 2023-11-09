@@ -12,5 +12,5 @@
   },
   "python.analysis.typeCheckingMode": "basic",
   "python.analysis.autoImportCompletions": true,
-  "python.terminal.activateEnvironment": false
+  "python.terminal.activateEnvironment": true
 }

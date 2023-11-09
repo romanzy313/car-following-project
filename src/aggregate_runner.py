@@ -33,7 +33,7 @@ def xfrange(start, stop, step):
         i += 1
 
 
-class AggregateSimulationRunner2:
+class AggregateRunner:
     def get_randomized_brains(self, ai_percent: float) -> List[str]:
         ai_drivers = round(ai_percent * self.vehicle_count)
         human_drivers = round((1 - ai_percent) * self.vehicle_count)

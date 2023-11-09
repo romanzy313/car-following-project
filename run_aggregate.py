@@ -1,5 +1,5 @@
 from pathlib import Path
-from src.aggregate_runner2 import AggregateSimulationRunner2
+from src.aggregate_runner import AggregateRunner
 from src.vehicle import Vehicle
 
 
@@ -28,7 +28,7 @@ def main():
     ai_vehicle = Vehicle(
         length=1, max_acceleration=1, max_deceleration=1, max_velocity=20
     )
-    runner = AggregateSimulationRunner2(
+    runner = AggregateRunner(
         vehicle=ai_vehicle,
         ai_brains=ai_brains,
         human_brains=human_brains,
