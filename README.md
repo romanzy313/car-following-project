@@ -1,6 +1,13 @@
-# Difference in car-following interaction between following a human-driven vehicle and an autonomous vehicle project
+# Human Drivers' Reactions to Automated Vehicles: An Analysis on Traffic System Impact
 
-Short description here
+Source code for final project of IFEEMCS520100 Fundamentals of Artificial Intelligence Programme course at TU Delft.
+
+## Authors
+
+- Roman Volovoy (R.Volovoy@student.tudelft.nl)
+- Xianzhi Zhang (X.Zhang-85@student.tudelft.nl)
+- Yuncong Liu (Y.Liu-138@student.tudelft.nl)
+- Zhengchu Wu (Z.Wu-27@student.tudelft.nl)
 
 ## Getting started
 
@@ -31,7 +38,7 @@ python example_run.py && python visualization.py --file ./results/test_run.json
 ## Rebuilding AI training data
 
 This repo contains trained models of all different datasets (2 HA, 2 HH, 1 AH) clusters.
-Re-clustering and re-training can be performed by running `sh ./train.sh`. This process can take a very long time (approx 2 hours on 12 core machine)
+Re-clustering and re-training can be performed by running `sh ./train.sh`. This process can take a very long time (approx. 2 hours on 12 core machine)
 
 ## Run tests
 
